@@ -6,11 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	app_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/application"
-	env_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/environment"
-	"github.com/prodvana/terraform-provider-prodvana/internal/provider/application"
-	"github.com/prodvana/terraform-provider-prodvana/internal/provider/runtime"
-
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -22,7 +17,7 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-// Ensure ScaffoldingProvider satisfies various provider interfaces.
+// Ensure ProdvanaProvider satisfies various provider interfaces.
 var _ provider.Provider = &ProdvanaProvider{}
 
 // ProdvanaProvider defines the provider implementation.
@@ -41,11 +36,6 @@ type ProdvanaProviderModel struct {
 
 type AuthToken struct {
 	Token string
-}
-
-type Clients struct {
-	EnvClient env_pb.EnvironmentManagerClient
-	AppClient app_pb.ApplicationManagerClient
 }
 
 func (t AuthToken) GetRequestMetadata(ctx context.Context, in ...string) (map[string]string, error) {
@@ -178,14 +168,15 @@ func (p *ProdvanaProvider) Configure(ctx context.Context, req provider.Configure
 
 func (p *ProdvanaProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		application.NewApplicationResource,
+		NewApplicationResource,
+		NewReleaseChannelResource,
 	}
 }
 
 func (p *ProdvanaProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		runtime.NewRuntimeDataSource,
-		runtime.NewRuntimesDataSource,
+		NewApplicationDataSource,
+		NewReleaseChannelDataSource,
 	}
 }
 

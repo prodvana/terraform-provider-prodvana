@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.8.0
 	github.com/hashicorp/terraform-plugin-testing v1.1.0
 	github.com/pkg/errors v0.9.1
-	github.com/prodvana/prodvana-public/go/prodvana-sdk v0.0.0-20230316211531-2c2de3413361
+	github.com/prodvana/prodvana-public/go/prodvana-sdk v0.0.0-20230616230158-d1c4978543a7
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 	google.golang.org/grpc v1.53.0
 )
