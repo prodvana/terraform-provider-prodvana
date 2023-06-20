@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -45,7 +46,8 @@ func TestAccApplicationResource(t *testing.T) {
 }
 
 func testAppName(name string) string {
-	return fmt.Sprintf("terraform-provider-testing-%s", name)
+	prefix := fmt.Sprintf("tf-provider-test-%s-", name)
+	return prefix + acctest.RandStringFromCharSet(40-len(prefix), acctest.CharSetAlphaNum)
 }
 
 func testAccApplicationResourceConfig(name string) string {
