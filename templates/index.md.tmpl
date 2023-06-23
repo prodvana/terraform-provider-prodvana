@@ -16,10 +16,13 @@ These can be passed to the provider block in your Terraform configuration:
 
 {{ tffile "examples/provider/provider.tf" }}
 
+{{ .SchemaMarkdown | trimspace }}
+
 Or they can be provided as environment variables:
 
 - `PVN_ORG_SLUG`
 - `PVN_API_TOKEN`
+
 
 ## See Also
 
