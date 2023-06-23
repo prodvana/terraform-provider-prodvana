@@ -56,7 +56,7 @@ Optional:
 
 - `name` (String) optional identifier for this runtime connection within this release channel
 - `runtime` (String) name of the a runtime
-- `type` (String) type of the runtime connection, one of (UNKNOWN_CONNECTION, LONG_LIVED_COMPUTE, EXTENSION)
+- `type` (String) type of the runtime connection, one of (EXTENSION, LONG_LIVED_COMPUTE, UNKNOWN_CONNECTION)
 
 
 <a id="nestedatt--policy"></a>
