@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -31,6 +32,9 @@ func (d *ReleaseChannelDataSource) Metadata(ctx context.Context, req datasource.
 }
 
 func (d *ReleaseChannelDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	connectionTypes := maps.Values(rc_pb.RuntimeConnectionType_name)
+	sort.Strings(connectionTypes)
+
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Prodvana Release Channel",
 		Attributes: map[string]schema.Attribute{
@@ -102,7 +106,7 @@ func (d *ReleaseChannelDataSource) Schema(ctx context.Context, req datasource.Sc
 							Computed:            true,
 						},
 						"type": schema.StringAttribute{
-							MarkdownDescription: fmt.Sprintf("type of the runtime connection, one of (%s)", strings.Join(maps.Values(rc_pb.RuntimeConnectionType_name), ", ")),
+							MarkdownDescription: fmt.Sprintf("type of the runtime connection, one of (%s)", strings.Join(connectionTypes, ", ")),
 							Optional:            true,
 							Computed:            true,
 							Validators:          validators.DefaultNameValidators(),
