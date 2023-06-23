@@ -17,7 +17,23 @@ go install
 
 ## Using the provider
 
-TODO
+```
+# org_slug and api_token can also be passed as environment variables:
+# export PVN_ORG_SLUG=my-org
+# export PVN_API_TOKEN=<api-token>
+
+variable "api_token" {
+  type = string
+}
+
+provider "prodvana" {
+  org_slug  = "my-org"
+  api_token = var.api_token
+}
+```
+
+See [the docs](https://github.com/prodvana/terraform-provider-prodvana/blob/main/docs/index.md) for more details.
+
 
 ## Developing the Provider
 
