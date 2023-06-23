@@ -69,9 +69,8 @@ func (r *ReleaseChannelResource) Metadata(ctx context.Context, req resource.Meta
 
 func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	connectionTypes := maps.Values(rc_pb.RuntimeConnectionType_name)
-	sort.Slice(connectionTypes, func(i int, j int) bool {
-		return connectionTypes[i] < connectionTypes[j]
-	})
+	sort.Strings(connectionTypes)
+
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Prodvana Release Channel",
 		Attributes: map[string]schema.Attribute{
