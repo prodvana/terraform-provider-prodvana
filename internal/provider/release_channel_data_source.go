@@ -98,7 +98,6 @@ func (d *ReleaseChannelDataSource) Schema(ctx context.Context, req datasource.Sc
 						"runtime": schema.StringAttribute{
 							MarkdownDescription: "name of the a runtime",
 							Optional:            true,
-							Validators:          validators.DefaultNameValidators(),
 						},
 						"name": schema.StringAttribute{
 							MarkdownDescription: "optional identifier for this runtime connection within this release channel",
@@ -109,7 +108,16 @@ func (d *ReleaseChannelDataSource) Schema(ctx context.Context, req datasource.Sc
 							MarkdownDescription: fmt.Sprintf("type of the runtime connection, one of (%s)", strings.Join(connectionTypes, ", ")),
 							Optional:            true,
 							Computed:            true,
-							Validators:          validators.DefaultNameValidators(),
+						},
+						"k8s_namespace": schema.StringAttribute{
+							MarkdownDescription: "Kubernetes namespace",
+							Optional:            true,
+							Computed:            true,
+						},
+						"ecs_prefix": schema.StringAttribute{
+							MarkdownDescription: "ECS prefix",
+							Optional:            true,
+							Computed:            true,
 						},
 					},
 				},
