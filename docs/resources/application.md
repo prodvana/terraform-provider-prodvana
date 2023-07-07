@@ -3,12 +3,12 @@
 page_title: "prodvana_application Resource - terraform-provider-prodvana"
 subcategory: ""
 description: |-
-  Prodvana Application
+  This resource allows you to manage a Prodvana Application https://docs.prodvana.io/docs/prodvana-concepts#application.
 ---
 
 # prodvana_application (Resource)
 
-Prodvana Application
+This resource allows you to manage a Prodvana [Application](https://docs.prodvana.io/docs/prodvana-concepts#application).
 
 ## Example Usage
 
@@ -30,4 +30,10 @@ resource "prodvana_application" "example" {
 - `id` (String) Application identifier
 - `version` (String) Current application version
 
+## Import
 
+Import is supported using the following syntax:
+
+```shell
+$ terraform import prodvana_application.example <application name>
+```

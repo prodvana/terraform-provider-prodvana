@@ -8,7 +8,7 @@ import (
 )
 
 func TestAccReleaseChannelResource(t *testing.T) {
-	appName := testAppName("rc-tests")
+	appName := uniqueTestName("rc-tests")
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,

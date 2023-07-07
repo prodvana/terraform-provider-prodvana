@@ -170,6 +170,7 @@ func (p *ProdvanaProvider) Resources(ctx context.Context) []func() resource.Reso
 	return []func() resource.Resource{
 		NewApplicationResource,
 		NewReleaseChannelResource,
+		NewRuntimeResource,
 	}
 }
 
@@ -177,6 +178,7 @@ func (p *ProdvanaProvider) DataSources(ctx context.Context) []func() datasource.
 	return []func() datasource.DataSource{
 		NewApplicationDataSource,
 		NewReleaseChannelDataSource,
+		NewRuntimeDataSource,
 	}
 }
 
