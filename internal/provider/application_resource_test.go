@@ -9,7 +9,7 @@ import (
 )
 
 func TestAccApplicationResource(t *testing.T) {
-	appName := testAppName("app-tests")
+	appName := uniqueTestName("app-tests")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -45,7 +45,7 @@ func TestAccApplicationResource(t *testing.T) {
 	})
 }
 
-func testAppName(name string) string {
+func uniqueTestName(name string) string {
 	prefix := fmt.Sprintf("tf-provider-test-%s-", name)
 	return prefix + acctest.RandStringFromCharSet(40-len(prefix), acctest.CharSetAlphaNum)
 }

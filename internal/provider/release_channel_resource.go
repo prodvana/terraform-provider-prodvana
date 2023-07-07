@@ -13,11 +13,13 @@ import (
 	"golang.org/x/exp/maps"
 	"google.golang.org/grpc"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -72,7 +74,7 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 	sort.Strings(connectionTypes)
 
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Prodvana Release Channel",
+		MarkdownDescription: "This resource allows you to manage a Prodvana [Release Channel](https://docs.prodvana.io/docs/prodvana-concepts#release-channel).",
 		Attributes: map[string]schema.Attribute{
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Release Channel name",
@@ -146,7 +148,9 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 							MarkdownDescription: fmt.Sprintf("type of the runtime connection, one of (%s)", strings.Join(connectionTypes, ", ")),
 							Optional:            true,
 							Computed:            true,
-							Validators:          validators.DefaultNameValidators(),
+							Validators: []validator.String{
+								stringvalidator.OneOf(connectionTypes...),
+							},
 						},
 					},
 				},
@@ -233,7 +237,7 @@ func (r *ReleaseChannelResource) refresh(ctx context.Context, data *ReleaseChann
 	return readReleaseChannelData(ctx, r.client, data)
 }
 
-func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData, stateData *ReleaseChannelResourceModel) error {
+func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *ReleaseChannelResourceModel) error {
 	runtimes := make([]*rc_pb.ReleaseChannelRuntimeConfig, len(planData.Runtimes))
 	for idx, rt := range planData.Runtimes {
 		connType := rc_pb.RuntimeConnectionType_UNKNOWN_CONNECTION
@@ -304,7 +308,7 @@ func (r *ReleaseChannelResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	err := r.createOrUpdate(ctx, data, nil)
+	err := r.createOrUpdate(ctx, data)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create release channel, got error: %s", err))
 		return
@@ -348,7 +352,7 @@ func (r *ReleaseChannelResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	err := r.createOrUpdate(ctx, planData, stateData)
+	err := r.createOrUpdate(ctx, planData)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update release channel, got error: %s", err))
 		return
@@ -391,7 +395,6 @@ func (r *ReleaseChannelResource) ImportState(ctx context.Context, req resource.I
 	// req.ID is of the form <application>/<relase channel>
 	parts := strings.Split(req.ID, "/")
 	if len(parts) != 2 {
-		// rewrite this error to include the correct formatting of an ID
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to import release channel, got error: invalid id %s, expected <application>/<release channel>", req.ID))
 		return
 	}
