@@ -117,33 +117,6 @@ func (r *RuntimeResource) Schema(ctx context.Context, req resource.SchemaRequest
 							stringplanmodifier.UseStateForUnknown(),
 						},
 					},
-					// "datadog": schema.SingleNestedAttribute{
-					// 	MarkdownDescription: "Datadog Configuration Options",
-					// 	Optional:            true,
-					// 	Attributes: map[string]schema.Attribute{
-					// 		"enabled": schema.BoolAttribute{
-					// 			MarkdownDescription: "Whether Datadog is enabled for this runtime",
-					// 			Optional:            true,
-					// 		},
-					// 		"managed": schema.BoolAttribute{
-					// 			MarkdownDescription: "Whether Datadog is managed by Prodvana",
-					// 			Optional:            true,
-					// 		},
-					// 		"datadog_namespace": schema.StringAttribute{
-					// 			MarkdownDescription: "Namespace to use for Datadog resources",
-					// 			Optional:            true,
-					// 		},
-					// 		"api_key": schema.StringAttribute{
-					// 			MarkdownDescription: "Datadog API Key",
-					// 			Optional:            true,
-					// 			Sensitive:           true,
-					// 		},
-					// 		"site": schema.StringAttribute{
-					// 			MarkdownDescription: "Datadog Site",
-					// 			Optional:            true,
-					// 		},
-					// 	},
-					// },
 				},
 				Validators: []validator.Object{
 					// objectvalidator.ConflictsWith(path.Expressions{
