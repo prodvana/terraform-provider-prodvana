@@ -50,6 +50,57 @@ func TestAccReleaseChannelResource(t *testing.T) {
 	})
 }
 
+func TestAccReleaseChannelResourceWithContainerOrchestration(t *testing.T) {
+	appName := uniqueTestName("rc-tests")
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccReleaseChannelResourceWithK8sNamespace(appName, "test-namespace"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "runtimes.0.k8s_namespace", "test-namespace"),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      "prodvana_release_channel.test",
+				ImportStateId:     appName + "/test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Update and Read testing
+			{
+				Config: testAccReleaseChannelResourceWithK8sNamespace(appName, "foo-namespace"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "runtimes.0.k8s_namespace", "foo-namespace"),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
+func testAccReleaseChannelResourceWithK8sNamespace(app string, namespace string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "prodvana_release_channel" "test" {
+  name = "test"
+  application = prodvana_application.%[2]s.name
+  runtimes = [
+	{
+		runtime = "default"
+		k8s_namespace = %[3]q
+	},
+  ]
+}
+`, testAccApplicationResourceConfig(app), app, namespace)
+}
+
 func testAccReleaseChannelResourceConfig(name, app string, env map[string]string) string {
 	policy := ""
 	if env != nil {

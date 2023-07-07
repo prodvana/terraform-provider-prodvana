@@ -73,6 +73,8 @@ resource "prodvana_release_channel" "prod" {
 
 Optional:
 
+- `ecs_prefix` (String) Prefix used when naming ECS resources. Can only be set on an ECS Runtime.
+- `k8s_namespace` (String) Optionally set a custom namespace. If not set, Prodvana will create and manage the namespace. If set, the namespace *must* already exist and Prodvana will not try to create or delete it. Can only be set on a Kubernetes Runtime.
 - `name` (String) optional identifier for this runtime connection within this release channel
 - `runtime` (String) name of the a runtime
 - `type` (String) type of the runtime connection, one of (EXTENSION, LONG_LIVED_COMPUTE, UNKNOWN_CONNECTION)

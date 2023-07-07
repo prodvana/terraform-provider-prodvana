@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	common_config_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/common_config"
 	rc_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/release_channel"
+	runtimes_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/runtimes"
 	"github.com/prodvana/terraform-provider-prodvana/internal/provider/validators"
 	"golang.org/x/exp/maps"
 	"google.golang.org/grpc"
@@ -63,6 +64,9 @@ type releaseChannelRuntimeConfig struct {
 	Runtime types.String `tfsdk:"runtime"`
 	Name    types.String `tfsdk:"name"`
 	Type    types.String `tfsdk:"type"`
+
+	K8sNamespace types.String `tfsdk:"k8s_namespace"`
+	EcsPrefix    types.String `tfsdk:"ecs_prefix"`
 }
 
 func (r *ReleaseChannelResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -152,6 +156,22 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 								stringvalidator.OneOf(connectionTypes...),
 							},
 						},
+						"k8s_namespace": schema.StringAttribute{
+							MarkdownDescription: "Optionally set a custom namespace. If not set, Prodvana will create and manage the namespace. If set, the namespace *must* already exist and Prodvana will not try to create or delete it. Can only be set on a Kubernetes Runtime.",
+							Optional:            true,
+							Computed:            true,
+							Validators: []validator.String{
+								stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("ecs_prefix")),
+							},
+						},
+						"ecs_prefix": schema.StringAttribute{
+							MarkdownDescription: "Prefix used when naming ECS resources. Can only be set on an ECS Runtime.",
+							Optional:            true,
+							Computed:            true,
+							Validators: []validator.String{
+								stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("kubernetes_namespace")),
+							},
+						},
 					},
 				},
 			},
@@ -226,6 +246,15 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 				Name:    types.StringValue(rt.Name),
 				Type:    types.StringValue(rt.Type.String()),
 			}
+			if rt.GetContainerOrchestration() != nil && rt.GetContainerOrchestration().Backend != nil {
+				backend := rt.GetContainerOrchestration().Backend
+				switch t := backend.(type) {
+				case *runtimes_pb.ContainerOrchestrationRuntime_K8S_:
+					runtimeConfigs[idx].K8sNamespace = types.StringValue(t.K8S.Namespace)
+				case *runtimes_pb.ContainerOrchestrationRuntime_Ecs:
+					runtimeConfigs[idx].EcsPrefix = types.StringValue(t.Ecs.Prefix)
+				}
+			}
 		}
 		data.Runtimes = runtimeConfigs
 	}
@@ -248,6 +277,27 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 			Runtime: rt.Runtime.ValueString(),
 			Name:    rt.Name.ValueString(),
 			Type:    connType,
+		}
+		if !rt.K8sNamespace.IsUnknown() {
+			runtimes[idx].Capability = &rc_pb.ReleaseChannelRuntimeConfig_ContainerOrchestration{
+				ContainerOrchestration: &runtimes_pb.ContainerOrchestrationRuntime{
+					Backend: &runtimes_pb.ContainerOrchestrationRuntime_K8S_{
+						K8S: &runtimes_pb.ContainerOrchestrationRuntime_K8S{
+							Namespace: rt.K8sNamespace.ValueString(),
+						},
+					},
+				},
+			}
+		} else if !rt.EcsPrefix.IsUnknown() {
+			runtimes[idx].Capability = &rc_pb.ReleaseChannelRuntimeConfig_ContainerOrchestration{
+				ContainerOrchestration: &runtimes_pb.ContainerOrchestrationRuntime{
+					Backend: &runtimes_pb.ContainerOrchestrationRuntime_Ecs{
+						Ecs: &runtimes_pb.ContainerOrchestrationRuntime_ECS{
+							Prefix: rt.EcsPrefix.ValueString(),
+						},
+					},
+				},
+			}
 		}
 	}
 	var policy *rc_pb.Policy
