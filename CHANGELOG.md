@@ -1,5 +1,10 @@
-## 0.1.1 (Unreleased)
+## 0.1.2 (Unreleased)
+
+## 0.1.1
 
 FEATURES:
-- Added support for `runtime` resources
+- Added initial alpha support for `runtime` resources
 - Added support for setting `k8s_namespace` and `ecs_prefix` on `prodvana_release_channel.runtime` definitions
+
+BUGS:
+- Fixed a bug in validation when setting the type of a Runtime attached to a Release Channel

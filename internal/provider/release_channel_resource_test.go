@@ -84,6 +84,57 @@ func TestAccReleaseChannelResourceWithContainerOrchestration(t *testing.T) {
 	})
 }
 
+func TestAccReleaseChannelResourceWithRuntimeType(t *testing.T) {
+	appName := uniqueTestName("rc-tests")
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccReleaseChannelResourceWithRuntimeType(appName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "runtimes.0.type", "LONG_LIVED_COMPUTE"),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      "prodvana_release_channel.test",
+				ImportStateId:     appName + "/test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Update and Read testing
+			{
+				Config: testAccReleaseChannelResourceWithRuntimeType(appName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "runtimes.0.type", "LONG_LIVED_COMPUTE"),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
+func testAccReleaseChannelResourceWithRuntimeType(app string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "prodvana_release_channel" "test" {
+  name = "test"
+  application = prodvana_application.%[2]s.name
+  runtimes = [
+	{
+		runtime = "default"
+		type = "LONG_LIVED_COMPUTE"
+	},
+  ]
+}
+`, testAccApplicationResourceConfig(app), app)
+}
+
 func testAccReleaseChannelResourceWithK8sNamespace(app string, namespace string) string {
 	return fmt.Sprintf(`
 %[1]s

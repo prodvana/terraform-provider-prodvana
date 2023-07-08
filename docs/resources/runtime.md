@@ -3,12 +3,12 @@
 page_title: "prodvana_runtime Resource - terraform-provider-prodvana"
 subcategory: ""
 description: |-
-  This resource allows you to manage a Prodvana Runtime https://docs.prodvana.io/docs/prodvana-concepts#runtime.
+  (Alpha! This feature is still in progress.) This resource allows you to manage a Prodvana Runtime https://docs.prodvana.io/docs/prodvana-concepts#runtime.
 ---
 
 # prodvana_runtime (Resource)
 
-This resource allows you to manage a Prodvana [Runtime](https://docs.prodvana.io/docs/prodvana-concepts#runtime).
+(Alpha! This feature is still in progress.) This resource allows you to manage a Prodvana [Runtime](https://docs.prodvana.io/docs/prodvana-concepts#runtime).
 
 ## Example Usage
 
