@@ -1,4 +1,9 @@
-## 0.1.2 (Unreleased)
+## 0.1.3 (Unreleased)
+
+## 0.1.2
+
+BUGS:
+- Fixed a bug where an incorrect runtime type would be set on Release Channel configuration
 
 ## 0.1.1
 
