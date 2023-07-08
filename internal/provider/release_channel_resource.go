@@ -69,14 +69,18 @@ type releaseChannelRuntimeConfig struct {
 	EcsPrefix    types.String `tfsdk:"ecs_prefix"`
 }
 
+var runtimeConnectionTypes []string
+
+func init() {
+	runtimeConnectionTypes = maps.Values(rc_pb.RuntimeConnectionType_name)
+	sort.Strings(runtimeConnectionTypes)
+}
+
 func (r *ReleaseChannelResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_release_channel"
 }
 
 func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	connectionTypes := maps.Values(rc_pb.RuntimeConnectionType_name)
-	sort.Strings(connectionTypes)
-
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "This resource allows you to manage a Prodvana [Release Channel](https://docs.prodvana.io/docs/prodvana-concepts#release-channel).",
 		Attributes: map[string]schema.Attribute{
@@ -149,11 +153,11 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 							Computed:            true,
 						},
 						"type": schema.StringAttribute{
-							MarkdownDescription: fmt.Sprintf("type of the runtime connection, one of (%s)", strings.Join(connectionTypes, ", ")),
+							MarkdownDescription: fmt.Sprintf("type of the runtime connection, one of (%s)", strings.Join(runtimeConnectionTypes, ", ")),
 							Optional:            true,
 							Computed:            true,
 							Validators: []validator.String{
-								stringvalidator.OneOf(connectionTypes...),
+								stringvalidator.OneOf(runtimeConnectionTypes...),
 							},
 						},
 						"k8s_namespace": schema.StringAttribute{
@@ -269,14 +273,16 @@ func (r *ReleaseChannelResource) refresh(ctx context.Context, data *ReleaseChann
 func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *ReleaseChannelResourceModel) error {
 	runtimes := make([]*rc_pb.ReleaseChannelRuntimeConfig, len(planData.Runtimes))
 	for idx, rt := range planData.Runtimes {
-		connType := rc_pb.RuntimeConnectionType_UNKNOWN_CONNECTION
-		if rt.Type.ValueString() != "" {
-			connType = rc_pb.RuntimeConnectionType(rc_pb.RuntimeConnectionType_value[rt.Name.ValueString()])
-		}
 		runtimes[idx] = &rc_pb.ReleaseChannelRuntimeConfig{
 			Runtime: rt.Runtime.ValueString(),
 			Name:    rt.Name.ValueString(),
-			Type:    connType,
+		}
+		if rt.Type.ValueString() != "" {
+			connVal, found := rc_pb.RuntimeConnectionType_value[rt.Type.ValueString()]
+			if !found {
+				return errors.Errorf("Invalid runtime connection type %s, must be one of (%s)", rt.Type.ValueString(), strings.Join(runtimeConnectionTypes, ", "))
+			}
+			runtimes[idx].Type = rc_pb.RuntimeConnectionType(connVal)
 		}
 		if !rt.K8sNamespace.IsUnknown() {
 			runtimes[idx].Capability = &rc_pb.ReleaseChannelRuntimeConfig_ContainerOrchestration{
