@@ -72,7 +72,7 @@ func (r *RuntimeResource) Schema(ctx context.Context, req resource.SchemaRequest
 	}
 
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "This resource allows you to manage a Prodvana [Runtime](https://docs.prodvana.io/docs/prodvana-concepts#runtime).",
+		MarkdownDescription: "(Alpha! This feature is still in progress.) This resource allows you to manage a Prodvana [Runtime](https://docs.prodvana.io/docs/prodvana-concepts#runtime).",
 		Attributes: map[string]schema.Attribute{
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Runtime name",
