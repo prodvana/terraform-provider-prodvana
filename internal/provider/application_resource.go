@@ -9,6 +9,8 @@ import (
 	rc_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/release_channel"
 	"github.com/prodvana/terraform-provider-prodvana/internal/provider/validators"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -151,6 +153,11 @@ func (r *ApplicationResource) Read(ctx context.Context, req resource.ReadRequest
 
 	err := r.refresh(ctx, data)
 	if err != nil {
+		// if the application does not exist, remove the resource
+		if status.Code(err) == codes.NotFound {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read application state for %s, got error: %s", data.Name.ValueString(), err))
 		return
 	}

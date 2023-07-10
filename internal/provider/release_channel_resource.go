@@ -13,6 +13,8 @@ import (
 	"github.com/prodvana/terraform-provider-prodvana/internal/provider/validators"
 	"golang.org/x/exp/maps"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -388,6 +390,11 @@ func (r *ReleaseChannelResource) Read(ctx context.Context, req resource.ReadRequ
 
 	err := r.refresh(ctx, data)
 	if err != nil {
+		// if the release channel does not exist, remove the resource
+		if status.Code(err) == codes.NotFound {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read release channel state for %s, got error: %s", data.Name.ValueString(), err))
 		return
 	}

@@ -10,6 +10,8 @@ import (
 	"github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/version"
 	"github.com/prodvana/terraform-provider-prodvana/internal/provider/validators"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -258,6 +260,11 @@ func (r *RuntimeResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	err := r.refresh(ctx, data)
 	if err != nil {
+		// if the runtime does not exist, remove the resource
+		if status.Code(err) == codes.NotFound {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read runtime state for %s, got error: %s", data.Name.ValueString(), err))
 		return
 	}
