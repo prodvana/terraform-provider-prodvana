@@ -1,5 +1,8 @@
 ## 0.1.3 (Unreleased)
 
+FEATURES:
+- Added `prodvana_runtime_link` resource
+
 ## 0.1.2
 
 BUGS:
