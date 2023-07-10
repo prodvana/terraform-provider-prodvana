@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	env_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/environment"
 	"github.com/prodvana/terraform-provider-prodvana/internal/provider/validators"
 	"golang.org/x/exp/maps"
@@ -52,26 +51,10 @@ func (d *RuntimeDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Computed:            true,
 				MarkdownDescription: "Runtime identifier",
 			},
-			"k8s": schema.SingleNestedAttribute{
-				MarkdownDescription: "K8S Runtime Configuration Options. These are only valid when `type` is set to `K8S`",
-				Optional:            true,
-				Attributes: map[string]schema.Attribute{
-					"agent_env": schema.MapAttribute{
-						ElementType:         types.StringType,
-						MarkdownDescription: "Environment variables to pass to the agent configuration. Useful for things like proxy configuration. Only useful when `agent_externally_managed` is false.",
-						Optional:            true,
-					},
-					"agent_externally_managed": schema.BoolAttribute{
-						MarkdownDescription: "Whether the agent lifecycle is handled externally by the runtime owner. When true, Prodvana will not update the agent. Default false.",
-						Optional:            true,
-					},
-					"api_token": schema.StringAttribute{
-						Optional:            true,
-						Computed:            true,
-						MarkdownDescription: "API Token used for linking the Kubernetes Prodvana agent",
-						Sensitive:           true,
-					},
-				},
+			"agent_api_token": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "API Token used for linking the Kubernetes Prodvana agent",
+				Sensitive:           true,
 			},
 			// TODO(mike): enable support for ECS -- need a good testing story
 			// "ecs": schema.SingleNestedAttribute{

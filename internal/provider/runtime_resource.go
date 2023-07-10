@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -42,14 +41,8 @@ type RuntimeResourceModel struct {
 	Id   types.String `tfsdk:"id"`
 	Type types.String `tfsdk:"type"`
 
-	K8S *k8sRuntimeOptions `tfsdk:"k8s"`
+	AgentApiToken types.String `tfsdk:"agent_api_token"`
 	// ECS *ecsRuntimeOptions `tfsdk:"ecs"`
-}
-
-type k8sRuntimeOptions struct {
-	AgentEnv               map[string]string `tfsdk:"agent_env"`
-	AgentExternallyManaged types.Bool        `tfsdk:"agent_externally_managed"`
-	ApiToken               types.String      `tfsdk:"api_token"`
 }
 
 // type ecsRuntimeOptions struct {
@@ -93,36 +86,12 @@ func (r *RuntimeResource) Schema(ctx context.Context, req resource.SchemaRequest
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"k8s": schema.SingleNestedAttribute{
-				MarkdownDescription: "K8S Runtime Configuration Options. These are only valid when `type` is set to `K8S`",
-				Optional:            true,
-				Attributes: map[string]schema.Attribute{
-					"agent_env": schema.MapAttribute{
-						ElementType:         types.StringType,
-						MarkdownDescription: "Environment variables to pass to the agent configuration. Useful for things like proxy configuration. Only useful when `agent_externally_managed` is false.",
-						Optional:            true,
-					},
-					"agent_externally_managed": schema.BoolAttribute{
-						MarkdownDescription: "Whether the agent lifecycle is handled externally by the runtime owner. When true, Prodvana will not update the agent. Default false.",
-						Optional:            true,
-						Computed:            true,
-						Default:             booldefault.StaticBool(false),
-					},
-					"api_token": schema.StringAttribute{
-						Optional:            true,
-						Computed:            true,
-						MarkdownDescription: "API Token used for linking the Kubernetes Prodvana agent",
-						Sensitive:           true,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
-					},
-				},
-				Validators: []validator.Object{
-					// objectvalidator.ConflictsWith(path.Expressions{
-					// 	path.MatchRoot("ecs"),
-					// }...),
-					validators.CheckAttributeAtPath(path.MatchRoot("type"), types.StringValue(env_pb.ClusterType_K8S.String())),
+			"agent_api_token": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "API Token used for linking the Kubernetes Prodvana agent",
+				Sensitive:           true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			// TODO(mike): enable support for ECS -- need a good testing story
@@ -202,20 +171,7 @@ func readRuntimeData(ctx context.Context, client env_pb.EnvironmentManagerClient
 		if err != nil {
 			return errors.Wrapf(err, "Unable to read runtime state for %s", data.Name.ValueString())
 		}
-
-		if data.K8S == nil {
-			data.K8S = &k8sRuntimeOptions{}
-		}
-
-		data.K8S.ApiToken = types.StringValue(tokenResp.ApiToken)
-		if resp.Cluster.Auth != nil && resp.Cluster.Auth.GetK8S() != nil {
-			k8sAuth := resp.Cluster.Auth.GetK8S()
-
-			data.K8S.AgentEnv = k8sAuth.AgentEnv
-			data.K8S.AgentExternallyManaged = types.BoolValue(k8sAuth.AgentExternallyManaged)
-		} else {
-			data.K8S.AgentExternallyManaged = types.BoolValue(false)
-		}
+		data.AgentApiToken = types.StringValue(tokenResp.ApiToken)
 	}
 	return nil
 }
@@ -238,8 +194,7 @@ func (r *RuntimeResource) createOrUpdate(ctx context.Context, planData *RuntimeR
 			K8SAgentAuth: true,
 			AuthOneof: &env_pb.ClusterAuth_K8S{
 				K8S: &env_pb.ClusterAuth_K8SAuth{
-					AgentEnv:               planData.K8S.AgentEnv,
-					AgentExternallyManaged: planData.K8S.AgentExternallyManaged.ValueBool(),
+					AgentExternallyManaged: true,
 				},
 			},
 		}

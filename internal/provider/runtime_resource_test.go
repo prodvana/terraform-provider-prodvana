@@ -15,11 +15,10 @@ func TestAccRuntimeResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccK8sRuntimeResourceConfig(runtimeName, "foo"),
+				Config: testAccK8sRuntimeResourceConfig(runtimeName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("prodvana_runtime.test", "name", runtimeName),
 					resource.TestCheckResourceAttrSet("prodvana_runtime.test", "id"),
-					resource.TestCheckResourceAttr("prodvana_runtime.test", "k8s.agent_env.PROXY", "foo"),
 				),
 			},
 			// ImportState testing
@@ -31,11 +30,10 @@ func TestAccRuntimeResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccK8sRuntimeResourceConfig(runtimeName, "bar"),
+				Config: testAccK8sRuntimeResourceConfig(runtimeName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("prodvana_runtime.test", "name", runtimeName),
 					resource.TestCheckResourceAttrSet("prodvana_runtime.test", "id"),
-					resource.TestCheckResourceAttr("prodvana_runtime.test", "k8s.agent_env.PROXY", "bar"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -43,16 +41,11 @@ func TestAccRuntimeResource(t *testing.T) {
 	})
 }
 
-func testAccK8sRuntimeResourceConfig(name string, proxyVal string) string {
+func testAccK8sRuntimeResourceConfig(name string) string {
 	return fmt.Sprintf(`
 resource "prodvana_runtime" "test" {
   name = %[1]q
   type = "K8S"
-  k8s = {
-	  agent_env = {
-		  "PROXY" = "%[2]s"
-	  }
-  }
 }
-`, name, proxyVal)
+`, name)
 }
