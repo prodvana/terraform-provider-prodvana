@@ -3,6 +3,9 @@
 FEATURES:
 - Added `prodvana_runtime_link` resource
 
+FIXED:
+- Better handling when resources are deleted outside terraform
+
 ## 0.1.2
 
 BUGS:
