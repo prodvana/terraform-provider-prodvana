@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/pkg/errors"
 	env_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/environment"
@@ -102,28 +101,7 @@ func (r *RuntimeLinkResource) refresh(ctx context.Context, data *RuntimeLinkReso
 
 	data.Id = types.StringValue(resp.Cluster.Id)
 
-	if resp.Cluster.Type != env_pb.ClusterType_K8S {
-		// only k8s runtimes currently have a delayed link
-		return true, nil
-	}
-
-	statusResp, err := r.client.GetClusterStatus(ctx, &env_pb.GetClusterStatusReq{
-		ClusterId: resp.Cluster.Id,
-	})
-	if err != nil {
-		return false, errors.Wrapf(err, "Unable to read runtime link status for %s", data.Name.ValueString())
-	}
-
-	if statusResp.LastHeartbeatTimestamp == nil {
-		return false, nil
-	}
-
-	startTS := time.Now().Add(-time.Minute * 10)
-	if statusResp.LastHeartbeatTimestamp.AsTime().After(startTS) {
-		return true, nil
-	}
-
-	return false, nil
+	return resp.Cluster.Type == env_pb.ClusterType_K8S, nil
 }
 
 func (r *RuntimeLinkResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -136,32 +114,18 @@ func (r *RuntimeLinkResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	// keep checking to see if linking succeeded until timeout
-	timeout, err := time.ParseDuration(data.Timeout.ValueString())
+	isK8s, err := r.refresh(ctx, data)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to parse timeout duration, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to check runtime link status, got error: %s", err))
 		return
 	}
-
-	startTS := time.Now()
-
-	for {
-		linked, err := r.refresh(ctx, data)
+	if isK8s {
+		// keep checking to see if linking succeeded until timeout
+		err := WaitForClusterWithTimeout(ctx, r.client, data.Id.ValueString(), data.Name.ValueString(), data.Timeout.ValueString())
 		if err != nil {
-			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to check runtime link status, got error: %s", err))
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Failed waiting for runtime linking: %s", err))
 			return
 		}
-
-		if linked {
-			break
-		}
-
-		if time.Since(startTS) > timeout {
-			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Timeout waiting for runtime link status, timeout: %s", data.Timeout.ValueString()))
-			return
-		}
-
-		time.Sleep(time.Second * 1)
 	}
 
 	tflog.Trace(ctx, "created runtime link resource")
@@ -213,7 +177,7 @@ func (r *RuntimeLinkResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	linked, err := r.refresh(ctx, planData)
+	_, err := r.refresh(ctx, planData)
 	if err != nil {
 		// if runtime doesn't exist anymore, remove the resource
 		if status.Code(err) == codes.NotFound {
@@ -226,13 +190,7 @@ func (r *RuntimeLinkResource) Update(ctx context.Context, req resource.UpdateReq
 
 	tflog.Trace(ctx, "updated runtime link resource")
 
-	// treat being unlinked as a deleted resource since this resource must be blocked on
-	if !linked {
-		resp.State.RemoveResource(ctx)
-	} else {
-		// Save updated data into Terraform state
-		resp.Diagnostics.Append(resp.State.Set(ctx, &planData)...)
-	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &planData)...)
 }
 
 func (r *RuntimeLinkResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

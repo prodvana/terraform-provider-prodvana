@@ -2,6 +2,7 @@
 
 FEATURES:
 - Added `prodvana_runtime_link` resource
+- Added `prodvana_managed_k8s_runtime` resource
 
 FIXED:
 - Better handling when resources are deleted outside terraform

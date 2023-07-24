@@ -172,6 +172,7 @@ func (p *ProdvanaProvider) Resources(ctx context.Context) []func() resource.Reso
 		NewReleaseChannelResource,
 		NewRuntimeResource,
 		NewRuntimeLinkResource,
+		NewManagedK8sRuntimeResource,
 	}
 }
 
