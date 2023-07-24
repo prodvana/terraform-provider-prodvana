@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccRuntimeResource(t *testing.T) {
+func TestAccK8sRuntimeResource(t *testing.T) {
 	runtimeName := uniqueTestName("runtime-tests")
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -17,13 +17,14 @@ func TestAccRuntimeResource(t *testing.T) {
 			{
 				Config: testAccK8sRuntimeResourceConfig(runtimeName),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("prodvana_runtime.test", "name", runtimeName),
-					resource.TestCheckResourceAttrSet("prodvana_runtime.test", "id"),
+					resource.TestCheckResourceAttr("prodvana_k8s_runtime.test", "name", runtimeName),
+					resource.TestCheckResourceAttrSet("prodvana_k8s_runtime.test", "id"),
+					resource.TestCheckResourceAttrSet("prodvana_k8s_runtime.test", "agent_api_token"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:      "prodvana_runtime.test",
+				ResourceName:      "prodvana_k8s_runtime.test",
 				ImportStateId:     runtimeName,
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -32,8 +33,9 @@ func TestAccRuntimeResource(t *testing.T) {
 			{
 				Config: testAccK8sRuntimeResourceConfig(runtimeName),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("prodvana_runtime.test", "name", runtimeName),
-					resource.TestCheckResourceAttrSet("prodvana_runtime.test", "id"),
+					resource.TestCheckResourceAttr("prodvana_k8s_runtime.test", "name", runtimeName),
+					resource.TestCheckResourceAttrSet("prodvana_k8s_runtime.test", "id"),
+					resource.TestCheckResourceAttrSet("prodvana_k8s_runtime.test", "agent_api_token"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -43,9 +45,8 @@ func TestAccRuntimeResource(t *testing.T) {
 
 func testAccK8sRuntimeResourceConfig(name string) string {
 	return fmt.Sprintf(`
-resource "prodvana_runtime" "test" {
+resource "prodvana_k8s_runtime" "test" {
   name = %[1]q
-  type = "K8S"
 }
 `, name)
 }
