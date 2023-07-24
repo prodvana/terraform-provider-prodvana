@@ -45,6 +45,9 @@ func TestAccManagedK8sRuntimeResource(t *testing.T) {
 }
 
 func TestAccManagedK8sRuntimeResourceK8sAuth(t *testing.T) {
+	if os.Getenv(resource.EnvTfAcc) != "1" {
+		t.Skipf("Skipping acceptance test due to %s", resource.EnvTfAcc)
+	}
 	ctx := context.Background()
 	cfgPath := os.ExpandEnv("${HOME}/.kube/config")
 	cfg, err := clientcmd.LoadFromFile(cfgPath)
