@@ -522,10 +522,6 @@ func (r *ManagedK8sRuntimeResource) createOrUpdate(ctx context.Context, diags di
 		Source: version.Source_IAC,
 	}
 
-	// agentEnvValue, err := planData.AgentEnv.ToTerraformValue(ctx)
-	// if err != nil {
-	// 	return err
-	// }
 	agentEnvValue, valueDiags := planData.AgentEnv.ToMapValue(ctx)
 	diags.Append(valueDiags...)
 	if diags.HasError() {
@@ -533,13 +529,6 @@ func (r *ManagedK8sRuntimeResource) createOrUpdate(ctx context.Context, diags di
 	}
 
 	var agentEnv map[string]string = nil
-	// if !agentEnvValue.IsNull() {
-	// 	err := agentEnvValue.As(agentEnv)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-
 	if !agentEnvValue.IsNull() {
 		unpackEnv := map[string]string{}
 		valueDiags = agentEnvValue.ElementsAs(ctx, &unpackEnv, false)
