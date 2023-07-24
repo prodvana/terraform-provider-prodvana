@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccRuntimeDataSource(t *testing.T) {
+func TestAccK8sRuntimeDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
@@ -15,8 +15,8 @@ func TestAccRuntimeDataSource(t *testing.T) {
 			{
 				Config: testAccRuntimeDataSourceConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.prodvana_runtime.test", "name", "default"),
-					resource.TestCheckResourceAttr("data.prodvana_runtime.test", "type", "K8S"),
+					resource.TestCheckResourceAttr("data.prodvana_k8s_runtime.test", "name", "default"),
+					resource.TestCheckResourceAttrSet("data.prodvana_k8s_runtime.test", "agent_api_token"),
 				),
 			},
 		},
@@ -24,7 +24,7 @@ func TestAccRuntimeDataSource(t *testing.T) {
 }
 
 var testAccRuntimeDataSourceConfig = `
-data "prodvana_runtime" "test" {
+data "prodvana_k8s_runtime" "test" {
   name = "default"
 }
 `

@@ -61,13 +61,12 @@ resource "prodvana_runtime_link" "test" {
 
 func testAccK8sRuntimeLinkResourceConfigTimeout(name string) string {
 	return fmt.Sprintf(`
-resource "prodvana_runtime" "test" {
+resource "prodvana_k8s_runtime" "test" {
   name = %[1]q
-  type = "K8S"
 }
 
 resource "prodvana_runtime_link" "test" {
-  name = prodvana_runtime.test.name
+  name = prodvana_k8s_runtime.test.name
   timeout = "1s"
 }
 `, name)

@@ -170,7 +170,7 @@ func (p *ProdvanaProvider) Resources(ctx context.Context) []func() resource.Reso
 	return []func() resource.Resource{
 		NewApplicationResource,
 		NewReleaseChannelResource,
-		NewRuntimeResource,
+		NewK8sRuntimeResource,
 		NewRuntimeLinkResource,
 		NewManagedK8sRuntimeResource,
 	}
@@ -180,7 +180,7 @@ func (p *ProdvanaProvider) DataSources(ctx context.Context) []func() datasource.
 	return []func() datasource.DataSource{
 		NewApplicationDataSource,
 		NewReleaseChannelDataSource,
-		NewRuntimeDataSource,
+		NewK8sRuntimeDataSource,
 	}
 }
 

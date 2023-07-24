@@ -4,7 +4,11 @@ FEATURES:
 - Added `prodvana_runtime_link` resource
 - Added `prodvana_managed_k8s_runtime` resource
 
-FIXED:
+CHANGES:
+- `prodvana_runtime` resource removed and replaced with `prodvana_k8s_runtime`
+- `prodvana_runtime` data source removed and replaced with `prodvana_k8s_runtime`
+
+FIXES:
 - Better handling when resources are deleted outside terraform
 
 ## 0.1.2
