@@ -604,7 +604,7 @@ func (r *ManagedK8sRuntimeResource) createOrUpdate(ctx context.Context, diags di
 		},
 	}
 	_, err = clientSet.CoreV1().Namespaces().Create(ctx, namespaceSpec, metav1.CreateOptions{})
-	if err != nil {
+	if err != nil && !k8s_errors.IsAlreadyExists(err) {
 		return errors.Wrapf(err, "Failed to create agent namespace")
 	}
 
@@ -616,7 +616,7 @@ func (r *ManagedK8sRuntimeResource) createOrUpdate(ctx context.Context, diags di
 		},
 	}
 	_, err = clientSet.CoreV1().ServiceAccounts(saSpec.Namespace).Create(ctx, saSpec, metav1.CreateOptions{})
-	if err != nil {
+	if err != nil && !k8s_errors.IsAlreadyExists(err) {
 		return errors.Wrapf(err, "Failed to create agent service account")
 	}
 
@@ -640,7 +640,7 @@ func (r *ManagedK8sRuntimeResource) createOrUpdate(ctx context.Context, diags di
 	}
 
 	_, err = clientSet.RbacV1().ClusterRoleBindings().Create(ctx, roleBindingSpec, metav1.CreateOptions{})
-	if err != nil {
+	if err != nil && !k8s_errors.IsAlreadyExists(err) {
 		return errors.Wrapf(err, "Failed to create agent cluster role binding")
 	}
 
@@ -709,12 +709,12 @@ func (r *ManagedK8sRuntimeResource) createOrUpdate(ctx context.Context, diags di
 
 	tflog.Info(ctx, fmt.Sprintf("Creating new deployment: %#v", deploymentSpec))
 	_, err = clientSet.AppsV1().Deployments(namespaceSpec.Name).Create(ctx, deploymentSpec, metav1.CreateOptions{})
-	if err != nil {
+	if err != nil && !k8s_errors.IsAlreadyExists(err) {
 		return errors.Wrapf(err, "Failed to create agent deployment")
 	}
 
 	err = WaitForClusterWithTimeout(ctx, r.client, linkResp.ClusterId, planData.Name.ValueString(), planData.Timeout.ValueString())
-	if err != nil {
+	if err != nil && !k8s_errors.IsAlreadyExists(err) {
 		return errors.Wrapf(err, "Runtime linking failed")
 	}
 

@@ -27,7 +27,9 @@ func (d envDefaultValue) MarkdownDescription(ctx context.Context) string {
 
 func (d envDefaultValue) DefaultString(ctx context.Context, req defaults.StringRequest, resp *defaults.StringResponse) {
 	value := os.Getenv(d.envName)
-	if value != "" {
+	if value == "" {
+		resp.PlanValue = types.StringNull()
+	} else {
 		resp.PlanValue = types.StringValue(value)
 	}
 }
@@ -80,6 +82,8 @@ func (d envDefaultPathListValue) MarkdownDescription(ctx context.Context) string
 func (d envDefaultPathListValue) DefaultList(ctx context.Context, req defaults.ListRequest, resp *defaults.ListResponse) {
 	value := os.Getenv(d.envName)
 	if value != "" {
+		resp.PlanValue = types.ListNull(types.StringType)
+	} else {
 		paths := filepath.SplitList(value)
 		attrPaths := make([]attr.Value, len(paths))
 		for i, path := range paths {
@@ -92,6 +96,7 @@ func (d envDefaultPathListValue) DefaultList(ctx context.Context, req defaults.L
 		}
 		resp.PlanValue = listValue
 	}
+
 }
 
 func EnvPathListValue(envName string) defaults.List {
