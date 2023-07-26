@@ -1,4 +1,6 @@
-## 0.1.3 (Unreleased)
+## 0.1.5 (Unreleased)
+
+## 0.1.4
 
 FEATURES:
 - Added `prodvana_runtime_link` resource
@@ -10,6 +12,10 @@ CHANGES:
 
 FIXES:
 - Better handling when resources are deleted outside terraform
+
+## 0.1.3
+
+See 0.1.4, 0.1.3 was released prematurely.
 
 ## 0.1.2
 
