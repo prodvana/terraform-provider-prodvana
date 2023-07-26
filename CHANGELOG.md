@@ -4,6 +4,7 @@
 
 FIXES:
  - Fixed a bug in `prodvana_managed_k8s_runtime` causing an error when attempting to apply after the first successful apply.
+ - Fixed a bug in `prodvana_managed_k8s_runtime` around parsing authentication `exec` arguments.
 
 ## 0.1.4
 

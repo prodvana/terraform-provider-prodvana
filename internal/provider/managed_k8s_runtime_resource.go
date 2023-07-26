@@ -203,23 +203,28 @@ func (r *ManagedK8sRuntimeResource) initializeConfiguration(ctx context.Context,
 		exec.InteractiveMode = clientcmdapi.IfAvailableExecInteractiveMode
 		exec.APIVersion = planData.Exec.ApiVersion.ValueString()
 		exec.Command = planData.Exec.Command.ValueString()
-		argDiags := planData.Exec.Args.ElementsAs(ctx, exec.Args, false)
-		if argDiags.HasError() {
-			diags.Append(argDiags...)
-			return nil, errors.Errorf("Failed to parse exec args")
+		if !planData.Exec.Args.IsNull() {
+			argDiags := planData.Exec.Args.ElementsAs(ctx, exec.Args, false)
+			if argDiags.HasError() {
+				diags.Append(argDiags...)
+				return nil, errors.Errorf("Failed to parse exec args")
+			}
 		}
-		envs := map[string]string{}
-		envDiags := planData.Exec.Env.ElementsAs(ctx, envs, false)
-		if envDiags.HasError() {
-			diags.Append(envDiags...)
-			return nil, errors.Errorf("Failed to parse exec env")
-		}
-		exec.Env = []clientcmdapi.ExecEnvVar{}
-		for kk, vv := range envs {
-			exec.Env = append(exec.Env, clientcmdapi.ExecEnvVar{Name: kk, Value: vv})
+		if !planData.Exec.Env.IsNull() {
+			envs := map[string]string{}
+			envDiags := planData.Exec.Env.ElementsAs(ctx, envs, false)
+			if envDiags.HasError() {
+				diags.Append(envDiags...)
+				return nil, errors.Errorf("Failed to parse exec env")
+			}
+			exec.Env = []clientcmdapi.ExecEnvVar{}
+			for kk, vv := range envs {
+				exec.Env = append(exec.Env, clientcmdapi.ExecEnvVar{Name: kk, Value: vv})
+			}
 		}
 		overrides.AuthInfo.Exec = exec
 	}
+	tflog.Debug(ctx, fmt.Sprintf("exec: %#v", overrides.AuthInfo.Exec))
 
 	if !planData.ProxyUrl.IsNull() {
 		overrides.ClusterDefaults.ProxyURL = planData.ProxyUrl.ValueString()

@@ -17,12 +17,12 @@ type envDefaultValue struct {
 
 // Description returns a plain text description of the default's behavior, suitable for a practitioner to understand its impact.
 func (d envDefaultValue) Description(ctx context.Context) string {
-	return fmt.Sprintf("If this value is not passed, it defaults to the value of %s (true when the env value is set to 'true', '1', or 'on')", d.envName)
+	return fmt.Sprintf("If this value is not passed, it defaults to the value of %s", d.envName)
 }
 
 // MarkdownDescription returns a markdown formatted description of the default's behavior, suitable for a practitioner to understand its impact.
 func (d envDefaultValue) MarkdownDescription(ctx context.Context) string {
-	return fmt.Sprintf("If this value is not passed, it defaults to the value of %s (true when the env value is set to 'true', '1', or 'on')", d.envName)
+	return fmt.Sprintf("If this value is not passed, it defaults to the value of %s", d.envName)
 }
 
 func (d envDefaultValue) DefaultString(ctx context.Context, req defaults.StringRequest, resp *defaults.StringResponse) {
@@ -45,12 +45,12 @@ type envDefaultBoolValue struct {
 
 // Description returns a plain text description of the default's behavior, suitable for a practitioner to understand its impact.
 func (d envDefaultBoolValue) Description(ctx context.Context) string {
-	return fmt.Sprintf("If this value is not passed, it defaults to the value of %s", d.envName)
+	return fmt.Sprintf("If this value is not passed, it defaults to the value of %s (true when the env value is set to 'true', '1', or 'on')", d.envName)
 }
 
 // MarkdownDescription returns a markdown formatted description of the default's behavior, suitable for a practitioner to understand its impact.
 func (d envDefaultBoolValue) MarkdownDescription(ctx context.Context) string {
-	return fmt.Sprintf("If this value is not passed, it defaults to the value of %s", d.envName)
+	return fmt.Sprintf("If this value is not passed, it defaults to the value of %s (true when the env value is set to 'true', '1', or 'on')", d.envName)
 }
 
 func (d envDefaultBoolValue) DefaultBool(ctx context.Context, req defaults.BoolRequest, resp *defaults.BoolResponse) {
