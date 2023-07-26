@@ -1,7 +1,6 @@
 # create the runtime placeholder in Prodvana
-resource "prodvana_runtime" "example" {
+resource "prodvana_k8s_runtime" "example" {
   name = "my-runtime"
-  type = "K8S"
 }
 
 # <...Full Kubernetes setup elided...>
