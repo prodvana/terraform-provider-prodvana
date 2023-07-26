@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/prodvana/terraform-provider-prodvana/internal/provider"
+	"github.com/prodvana/terraform-provider-prodvana/version"
 )
 
 // Run "go generate" to format example terraform files and generate the docs for the registry/website
@@ -18,15 +19,6 @@ import (
 // Run the docs generation tool, check its repository for more information on how it works and how docs
 // can be customized.
 //go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
-
-var (
-	// these will be set by the goreleaser configuration
-	// to appropriate values for the compiled binary.
-	version string = "dev"
-
-	// goreleaser can pass other information to the main package, such as the specific commit
-	// https://goreleaser.com/cookbooks/using-main.version/
-)
 
 func main() {
 	var debug bool
@@ -40,7 +32,7 @@ func main() {
 		Debug:   debug,
 	}
 
-	err := providerserver.Serve(context.Background(), provider.New(version), opts)
+	err := providerserver.Serve(context.Background(), provider.New(version.Version), opts)
 
 	if err != nil {
 		log.Fatal(err.Error())
