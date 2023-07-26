@@ -286,6 +286,9 @@ The agent will be installed as a Kubernetes deployment in the specified namespac
 			"agent_runtime_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "The runtime identifier of the agent",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"agent_namespace": schema.StringAttribute{
 				Computed:            true,
@@ -330,6 +333,9 @@ The agent will be installed as a Kubernetes deployment in the specified namespac
 				Computed:            true,
 				MarkdownDescription: "Server name passed to the server for SNI and is used in the client to check server certificates against",
 				Default:             defaults.EnvStringValue("KUBE_TLS_SERVER_NAME"),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"client_certificate": schema.StringAttribute{
@@ -337,18 +343,27 @@ The agent will be installed as a Kubernetes deployment in the specified namespac
 				Computed:            true,
 				MarkdownDescription: "PEM-encoded client certificate for TLS authentication.",
 				Default:             defaults.EnvStringValue("KUBE_CLIENT_CERT_DATA"),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"client_key": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
 				MarkdownDescription: "PEM-encoded client certificate key for TLS authentication.",
 				Default:             defaults.EnvStringValue("KUBE_CLIENT_KEY_DATA"),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"cluster_ca_certificate": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
 				MarkdownDescription: "PEM-encoded root certificates bundle for TLS authentication.",
 				Default:             defaults.EnvStringValue("KUBE_CLUSTER_CA_CERT_DATA"),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"config_paths": schema.ListAttribute{
 				ElementType:         types.StringType,
@@ -362,30 +377,45 @@ The agent will be installed as a Kubernetes deployment in the specified namespac
 				Computed:            true,
 				MarkdownDescription: "Path to the kube config file.",
 				Default:             defaults.EnvStringValue("KUBE_CONFIG_PATH"),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"config_context": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
 				MarkdownDescription: "Context to use from the kube config file.",
 				Default:             defaults.EnvStringValue("KUBE_CTX"),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"config_context_auth_info": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
 				MarkdownDescription: "Authentication info context of the kube config (name of the kubeconfig user, `--user` flag in `kubectl`).",
 				Default:             defaults.EnvStringValue("KUBE_CTX_AUTH_INFO"),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"config_context_cluster": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
 				MarkdownDescription: "Cluster context of the kube config (name of the kubeconfig cluster, `--cluster` flag in `kubectl`).",
 				Default:             defaults.EnvStringValue("KUBE_CTX_CLUSTER"),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
 				MarkdownDescription: "Token to authenticate an service account",
 				Default:             defaults.EnvStringValue("KUBE_TOKEN"),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"exec": schema.SingleNestedAttribute{
 				Optional:            true,
@@ -474,6 +504,8 @@ func readManagedK8sRuntimeData(ctx context.Context, client env_pb.EnvironmentMan
 	}
 	if found {
 		data.AgentRuntimeId = types.StringValue(runtimeId)
+	} else {
+		data.AgentRuntimeId = types.StringNull()
 	}
 	return nil
 }
