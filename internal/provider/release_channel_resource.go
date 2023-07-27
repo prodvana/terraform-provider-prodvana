@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	common_config_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/common_config"
+	prot_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/protection"
 	rc_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/release_channel"
 	runtimes_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/runtimes"
 	"github.com/prodvana/terraform-provider-prodvana/internal/provider/validators"
@@ -18,6 +19,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -55,6 +58,10 @@ type ReleaseChannelResourceModel struct {
 
 	ReleaseChannelStablePreconditions []*releaseChannelStable `tfsdk:"release_channel_stable_preconditions"`
 	ManualApprovalPreconditions       []*manualApproval       `tfsdk:"manual_approval_preconditions"`
+
+	Protections                []*protectionAttachment `tfsdk:"protections"`
+	ConvergenceProtections     []*protectionAttachment `tfsdk:"convergence_protections"`
+	ServiceInstanceProtections []*protectionAttachment `tfsdk:"service_instance_protections"`
 }
 
 type releaseChannelStable struct {
@@ -101,6 +108,120 @@ func (r *ReleaseChannelResource) Metadata(ctx context.Context, req resource.Meta
 }
 
 func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+
+	protectionSchema := schema.NestedAttributeObject{
+		Attributes: map[string]schema.Attribute{
+			"name": schema.StringAttribute{
+				MarkdownDescription: "name of the protection",
+				Optional:            true,
+				Computed:            true,
+				Validators:          validators.DefaultNameValidators(),
+			},
+			"ref": schema.SingleNestedAttribute{
+				MarkdownDescription: "reference to a protection stored in Prodvana",
+				Required:            true,
+				Attributes: map[string]schema.Attribute{
+					"name": schema.StringAttribute{
+						MarkdownDescription: "name of the protection",
+						Required:            true,
+						Validators:          validators.DefaultNameValidators(),
+					},
+					"parameters": schema.ListNestedAttribute{
+						MarkdownDescription: "parameters to pass to the protection",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"name": schema.StringAttribute{
+									MarkdownDescription: "name of the parameter",
+									Required:            true,
+								},
+								"string_value": schema.StringAttribute{
+									MarkdownDescription: "parameter string value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set",
+									Optional:            true,
+									Validators: []validator.String{
+										stringvalidator.ExactlyOneOf(
+											path.MatchRelative().AtParent().AtName("int_value"),
+											path.MatchRelative().AtParent().AtName("docker_image_tag_value"),
+											path.MatchRelative().AtParent().AtName("secret_value"),
+										),
+									},
+								},
+								"int_value": schema.Int64Attribute{
+									MarkdownDescription: "parameter int value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set",
+									Optional:            true,
+									Validators: []validator.Int64{
+										int64validator.ExactlyOneOf(
+											path.MatchRelative().AtParent().AtName("string_value"),
+											path.MatchRelative().AtParent().AtName("docker_image_tag_value"),
+											path.MatchRelative().AtParent().AtName("secret_value"),
+										),
+									},
+								},
+								"docker_image_tag_value": schema.StringAttribute{
+									MarkdownDescription: "parameter docker image tag value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set",
+									Optional:            true,
+									Validators: []validator.String{
+										stringvalidator.ExactlyOneOf(
+											path.MatchRelative().AtParent().AtName("string_value"),
+											path.MatchRelative().AtParent().AtName("int_value"),
+											path.MatchRelative().AtParent().AtName("secret_value"),
+										),
+									},
+								},
+								"secret_value": schema.SingleNestedAttribute{
+									MarkdownDescription: "parameter secret value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set",
+									Optional:            true,
+									Validators: []validator.Object{
+										objectvalidator.ExactlyOneOf(
+											path.MatchRelative().AtParent().AtName("string_value"),
+											path.MatchRelative().AtParent().AtName("int_value"),
+											path.MatchRelative().AtParent().AtName("docker_image_tag_value"),
+										),
+									},
+									Attributes: map[string]schema.Attribute{
+										"key": schema.StringAttribute{
+											MarkdownDescription: "Name of the secret.",
+											Required:            true,
+										},
+										"version": schema.StringAttribute{
+											MarkdownDescription: "Version of the secret",
+											Required:            true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"pre_approval": schema.SingleNestedAttribute{
+				MarkdownDescription: "pre-approval lifecycle options, enabled if present",
+				Optional:            true,
+			},
+			"post_approval": schema.SingleNestedAttribute{
+				MarkdownDescription: "post-approval lifecycle options, enabled if present",
+				Optional:            true,
+			},
+			"deployment": schema.SingleNestedAttribute{
+				MarkdownDescription: "deployment lifecycle options, enabled if present",
+				Optional:            true,
+			},
+			"post_deployment": schema.SingleNestedAttribute{
+				MarkdownDescription: "post-deployment lifecycle options, enabled if present",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"delay_check_duration": schema.StringAttribute{
+						MarkdownDescription: "delay between the deployment completing and when this protection starts checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`",
+						Optional:            true,
+					},
+					"check_duration": schema.StringAttribute{
+						MarkdownDescription: "how long to keep checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`",
+						Optional:            true,
+					},
+				},
+			},
+		},
+	}
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "This resource allows you to manage a Prodvana [Release Channel](https://docs.prodvana.io/docs/prodvana-concepts#release-channel).",
 		Attributes: map[string]schema.Attribute{
@@ -241,6 +362,21 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 					},
 				},
 			},
+			"protections": schema.ListNestedAttribute{
+				MarkdownDescription: "Protections applied this release channel",
+				Optional:            true,
+				NestedObject:        protectionSchema,
+			},
+			"service_instance_protections": schema.ListNestedAttribute{
+				MarkdownDescription: "Protections applied to service instances in this release channel",
+				Optional:            true,
+				NestedObject:        protectionSchema,
+			},
+			"convergence_protections": schema.ListNestedAttribute{
+				MarkdownDescription: "Feature Coming Soon",
+				Optional:            true,
+				NestedObject:        protectionSchema,
+			},
 		},
 	}
 }
@@ -263,6 +399,14 @@ func (r *ReleaseChannelResource) Configure(ctx context.Context, req resource.Con
 	}
 
 	r.client = rc_pb.NewReleaseChannelManagerClient(conn)
+}
+
+func attachmentProtosToTerraform(protections []*prot_pb.ProtectionAttachmentConfig) []*protectionAttachment {
+	attachments := make([]*protectionAttachment, len(protections))
+	for idx, pa := range protections {
+		attachments[idx] = ProtectionAttachmentProtoToTerraform(pa)
+	}
+	return attachments
 }
 
 func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelManagerClient, data *ReleaseChannelResourceModel) error {
@@ -325,9 +469,9 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 		data.Runtimes = runtimeConfigs
 	}
 
-	rcStable := []*releaseChannelStable{}
-	approvals := []*manualApproval{}
 	if config.Preconditions != nil {
+		rcStable := []*releaseChannelStable{}
+		approvals := []*manualApproval{}
 		for _, rc := range config.Preconditions {
 			switch rc.Precondition.(type) {
 			case *rc_pb.Precondition_ReleaseChannelStable_:
@@ -347,13 +491,31 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 				approvals = append(approvals, precon)
 			}
 		}
+		if len(rcStable) > 0 {
+			data.ReleaseChannelStablePreconditions = rcStable
+		}
+		if len(approvals) > 0 {
+			data.ManualApprovalPreconditions = approvals
+		}
 	}
 
-	if len(rcStable) > 0 {
-		data.ReleaseChannelStablePreconditions = rcStable
+	if config.Protections != nil {
+		protections := attachmentProtosToTerraform(config.Protections)
+		if len(protections) > 0 {
+			data.Protections = protections
+		}
 	}
-	if len(approvals) > 0 {
-		data.ManualApprovalPreconditions = approvals
+	if config.ConvergenceProtections != nil {
+		protections := attachmentProtosToTerraform(config.ConvergenceProtections)
+		if len(protections) > 0 {
+			data.ConvergenceProtections = protections
+		}
+	}
+	if config.ServiceInstanceProtections != nil {
+		protections := attachmentProtosToTerraform(config.ServiceInstanceProtections)
+		if len(protections) > 0 {
+			data.ServiceInstanceProtections = protections
+		}
 	}
 
 	return nil
@@ -361,6 +523,18 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 
 func (r *ReleaseChannelResource) refresh(ctx context.Context, data *ReleaseChannelResourceModel) error {
 	return readReleaseChannelData(ctx, r.client, data)
+}
+
+func protectionAttachmentsToProtos(attachments []*protectionAttachment) ([]*prot_pb.ProtectionAttachmentConfig, error) {
+	protections := []*prot_pb.ProtectionAttachmentConfig{}
+	for _, protection := range attachments {
+		protoAttachment, err := protection.AsProto()
+		if err != nil {
+			return nil, err
+		}
+		protections = append(protections, protoAttachment)
+	}
+	return protections, nil
 }
 
 func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *ReleaseChannelResourceModel) error {
@@ -464,14 +638,32 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 		}
 	}
 
-	releaseChannel := &rc_pb.ReleaseChannelConfig{
-		Name:          planData.Name.ValueString(),
-		Runtimes:      runtimes,
-		Policy:        policy,
-		Preconditions: preconditions,
+	protections, err := protectionAttachmentsToProtos(planData.Protections)
+	if err != nil {
+		return err
 	}
 
-	_, err := r.client.ConfigureReleaseChannel(ctx, &rc_pb.ConfigureReleaseChannelReq{
+	convergenceProtections, err := protectionAttachmentsToProtos(planData.ConvergenceProtections)
+	if err != nil {
+		return err
+	}
+
+	svcInstanceProtections, err := protectionAttachmentsToProtos(planData.ServiceInstanceProtections)
+	if err != nil {
+		return err
+	}
+
+	releaseChannel := &rc_pb.ReleaseChannelConfig{
+		Name:                       planData.Name.ValueString(),
+		Runtimes:                   runtimes,
+		Policy:                     policy,
+		Preconditions:              preconditions,
+		Protections:                protections,
+		ConvergenceProtections:     convergenceProtections,
+		ServiceInstanceProtections: svcInstanceProtections,
+	}
+
+	_, err = r.client.ConfigureReleaseChannel(ctx, &rc_pb.ConfigureReleaseChannelReq{
 		ReleaseChannel: releaseChannel,
 		Application:    planData.Application.ValueString(),
 	})

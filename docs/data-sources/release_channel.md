@@ -29,15 +29,91 @@ data "prodvana_release_channel" "example" {
 
 ### Optional
 
+- `convergence_protections` (Attributes List) Feature Coming Soon (see [below for nested schema](#nestedatt--convergence_protections))
 - `manual_approval_preconditions` (Attributes List) Preconditions requiring manual approval before this release channel can be deployed (see [below for nested schema](#nestedatt--manual_approval_preconditions))
 - `policy` (Attributes) Release Channel policy applied to all services (see [below for nested schema](#nestedatt--policy))
+- `protections` (Attributes List) Protections applied this release channel (see [below for nested schema](#nestedatt--protections))
 - `release_channel_stable_preconditions` (Attributes List) Preconditions requiring other release channels to be stable before this release channel can be deployed (see [below for nested schema](#nestedatt--release_channel_stable_preconditions))
+- `service_instance_protections` (Attributes List) Protections applied to service instances in this release channel (see [below for nested schema](#nestedatt--service_instance_protections))
 
 ### Read-Only
 
 - `id` (String) Release channel identifier
 - `runtimes` (Attributes List) Release Channel policy applied to all services (see [below for nested schema](#nestedatt--runtimes))
 - `version` (String) Current application version
+
+<a id="nestedatt--convergence_protections"></a>
+### Nested Schema for `convergence_protections`
+
+Required:
+
+- `ref` (Attributes) reference to a protection stored in Prodvana (see [below for nested schema](#nestedatt--convergence_protections--ref))
+
+Optional:
+
+- `deployment` (Attributes) deployment lifecycle options, enabled if present (see [below for nested schema](#nestedatt--convergence_protections--deployment))
+- `name` (String) name of the protection
+- `post_approval` (Attributes) post-approval lifecycle options, enabled if present (see [below for nested schema](#nestedatt--convergence_protections--post_approval))
+- `post_deployment` (Attributes) post-deployment lifecycle options, enabled if present (see [below for nested schema](#nestedatt--convergence_protections--post_deployment))
+- `pre_approval` (Attributes) pre-approval lifecycle options, enabled if present (see [below for nested schema](#nestedatt--convergence_protections--pre_approval))
+
+<a id="nestedatt--convergence_protections--ref"></a>
+### Nested Schema for `convergence_protections.ref`
+
+Required:
+
+- `name` (String) name of the protection
+
+Optional:
+
+- `parameters` (Attributes List) parameters to pass to the protection (see [below for nested schema](#nestedatt--convergence_protections--ref--parameters))
+
+<a id="nestedatt--convergence_protections--ref--parameters"></a>
+### Nested Schema for `convergence_protections.ref.parameters`
+
+Required:
+
+- `name` (String) name of the parameter
+
+Optional:
+
+- `docker_image_tag_value` (String) parameter docker image tag value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set
+- `int_value` (Number) parameter int value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set
+- `secret_value` (Attributes) parameter secret value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set (see [below for nested schema](#nestedatt--convergence_protections--ref--parameters--secret_value))
+- `string_value` (String) parameter string value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set
+
+<a id="nestedatt--convergence_protections--ref--parameters--secret_value"></a>
+### Nested Schema for `convergence_protections.ref.parameters.string_value`
+
+Required:
+
+- `key` (String) Name of the secret.
+- `version` (String) Version of the secret
+
+
+
+
+<a id="nestedatt--convergence_protections--deployment"></a>
+### Nested Schema for `convergence_protections.deployment`
+
+
+<a id="nestedatt--convergence_protections--post_approval"></a>
+### Nested Schema for `convergence_protections.post_approval`
+
+
+<a id="nestedatt--convergence_protections--post_deployment"></a>
+### Nested Schema for `convergence_protections.post_deployment`
+
+Optional:
+
+- `check_duration` (String) how long to keep checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
+- `delay_check_duration` (String) delay between the deployment completing and when this protection starts checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
+
+
+<a id="nestedatt--convergence_protections--pre_approval"></a>
+### Nested Schema for `convergence_protections.pre_approval`
+
+
 
 <a id="nestedatt--manual_approval_preconditions"></a>
 ### Nested Schema for `manual_approval_preconditions`
@@ -78,6 +154,79 @@ Optional:
 
 
 
+<a id="nestedatt--protections"></a>
+### Nested Schema for `protections`
+
+Required:
+
+- `ref` (Attributes) reference to a protection stored in Prodvana (see [below for nested schema](#nestedatt--protections--ref))
+
+Optional:
+
+- `deployment` (Attributes) deployment lifecycle options, enabled if present (see [below for nested schema](#nestedatt--protections--deployment))
+- `name` (String) name of the protection
+- `post_approval` (Attributes) post-approval lifecycle options, enabled if present (see [below for nested schema](#nestedatt--protections--post_approval))
+- `post_deployment` (Attributes) post-deployment lifecycle options, enabled if present (see [below for nested schema](#nestedatt--protections--post_deployment))
+- `pre_approval` (Attributes) pre-approval lifecycle options, enabled if present (see [below for nested schema](#nestedatt--protections--pre_approval))
+
+<a id="nestedatt--protections--ref"></a>
+### Nested Schema for `protections.ref`
+
+Required:
+
+- `name` (String) name of the protection
+
+Optional:
+
+- `parameters` (Attributes List) parameters to pass to the protection (see [below for nested schema](#nestedatt--protections--ref--parameters))
+
+<a id="nestedatt--protections--ref--parameters"></a>
+### Nested Schema for `protections.ref.parameters`
+
+Required:
+
+- `name` (String) name of the parameter
+
+Optional:
+
+- `docker_image_tag_value` (String) parameter docker image tag value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set
+- `int_value` (Number) parameter int value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set
+- `secret_value` (Attributes) parameter secret value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set (see [below for nested schema](#nestedatt--protections--ref--parameters--secret_value))
+- `string_value` (String) parameter string value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set
+
+<a id="nestedatt--protections--ref--parameters--secret_value"></a>
+### Nested Schema for `protections.ref.parameters.string_value`
+
+Required:
+
+- `key` (String) Name of the secret.
+- `version` (String) Version of the secret
+
+
+
+
+<a id="nestedatt--protections--deployment"></a>
+### Nested Schema for `protections.deployment`
+
+
+<a id="nestedatt--protections--post_approval"></a>
+### Nested Schema for `protections.post_approval`
+
+
+<a id="nestedatt--protections--post_deployment"></a>
+### Nested Schema for `protections.post_deployment`
+
+Optional:
+
+- `check_duration` (String) how long to keep checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
+- `delay_check_duration` (String) delay between the deployment completing and when this protection starts checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
+
+
+<a id="nestedatt--protections--pre_approval"></a>
+### Nested Schema for `protections.pre_approval`
+
+
+
 <a id="nestedatt--release_channel_stable_preconditions"></a>
 ### Nested Schema for `release_channel_stable_preconditions`
 
@@ -85,6 +234,79 @@ Required:
 
 - `duration` (String) duration to wait for the release channel to be stable. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
 - `release_channel` (String) name of a release channel that must be in a stable deployment state
+
+
+<a id="nestedatt--service_instance_protections"></a>
+### Nested Schema for `service_instance_protections`
+
+Required:
+
+- `ref` (Attributes) reference to a protection stored in Prodvana (see [below for nested schema](#nestedatt--service_instance_protections--ref))
+
+Optional:
+
+- `deployment` (Attributes) deployment lifecycle options, enabled if present (see [below for nested schema](#nestedatt--service_instance_protections--deployment))
+- `name` (String) name of the protection
+- `post_approval` (Attributes) post-approval lifecycle options, enabled if present (see [below for nested schema](#nestedatt--service_instance_protections--post_approval))
+- `post_deployment` (Attributes) post-deployment lifecycle options, enabled if present (see [below for nested schema](#nestedatt--service_instance_protections--post_deployment))
+- `pre_approval` (Attributes) pre-approval lifecycle options, enabled if present (see [below for nested schema](#nestedatt--service_instance_protections--pre_approval))
+
+<a id="nestedatt--service_instance_protections--ref"></a>
+### Nested Schema for `service_instance_protections.ref`
+
+Required:
+
+- `name` (String) name of the protection
+
+Optional:
+
+- `parameters` (Attributes List) parameters to pass to the protection (see [below for nested schema](#nestedatt--service_instance_protections--ref--parameters))
+
+<a id="nestedatt--service_instance_protections--ref--parameters"></a>
+### Nested Schema for `service_instance_protections.ref.parameters`
+
+Required:
+
+- `name` (String) name of the parameter
+
+Optional:
+
+- `docker_image_tag_value` (String) parameter docker image tag value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set
+- `int_value` (Number) parameter int value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set
+- `secret_value` (Attributes) parameter secret value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set (see [below for nested schema](#nestedatt--service_instance_protections--ref--parameters--secret_value))
+- `string_value` (String) parameter string value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set
+
+<a id="nestedatt--service_instance_protections--ref--parameters--secret_value"></a>
+### Nested Schema for `service_instance_protections.ref.parameters.string_value`
+
+Required:
+
+- `key` (String) Name of the secret.
+- `version` (String) Version of the secret
+
+
+
+
+<a id="nestedatt--service_instance_protections--deployment"></a>
+### Nested Schema for `service_instance_protections.deployment`
+
+
+<a id="nestedatt--service_instance_protections--post_approval"></a>
+### Nested Schema for `service_instance_protections.post_approval`
+
+
+<a id="nestedatt--service_instance_protections--post_deployment"></a>
+### Nested Schema for `service_instance_protections.post_deployment`
+
+Optional:
+
+- `check_duration` (String) how long to keep checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
+- `delay_check_duration` (String) delay between the deployment completing and when this protection starts checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
+
+
+<a id="nestedatt--service_instance_protections--pre_approval"></a>
+### Nested Schema for `service_instance_protections.pre_approval`
+
 
 
 <a id="nestedatt--runtimes"></a>
