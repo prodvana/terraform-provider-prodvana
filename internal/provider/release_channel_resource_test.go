@@ -118,6 +118,59 @@ func TestAccReleaseChannelResourceWithRuntimeType(t *testing.T) {
 	})
 }
 
+func TestAccReleaseChannelResourceWithStablePrecondition(t *testing.T) {
+	appName := uniqueTestName("rc-tests")
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccReleaseChannelResourceWithPreconditions(appName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
+
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "release_channel_stable_preconditions.0.release_channel", "pre"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "release_channel_stable_preconditions.1.release_channel", "pre2"),
+
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "manual_approval_preconditions.0.name", "approval1"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "manual_approval_preconditions.1.name", "approval2"),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      "prodvana_release_channel.test",
+				ImportStateId:     appName + "/test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Update and Read testing
+			{
+				Config: testAccReleaseChannelResourceWithPreconditions(appName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
+
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "release_channel_stable_preconditions.0.release_channel", "pre"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "release_channel_stable_preconditions.1.release_channel", "pre2"),
+
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "manual_approval_preconditions.0.name", "approval1"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "manual_approval_preconditions.1.name", "approval2"),
+				),
+			},
+			{
+				Config: testAccReleaseChannelResourceWithoutPreconditions(appName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
+
+					resource.TestCheckNoResourceAttr("prodvana_release_channel.test", "release_channel_stable_preconditions"),
+					resource.TestCheckNoResourceAttr("prodvana_release_channel.test", "manual_approval_preconditions"),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
 func testAccReleaseChannelResourceWithRuntimeType(app string) string {
 	return fmt.Sprintf(`
 %[1]s
@@ -129,6 +182,96 @@ resource "prodvana_release_channel" "test" {
 	{
 		runtime = "default"
 		type = "LONG_LIVED_COMPUTE"
+	},
+  ]
+}
+`, testAccApplicationResourceConfig(app), app)
+}
+
+func testAccReleaseChannelResourceWithPreconditions(app string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "prodvana_release_channel" "pre" {
+  name = "pre"
+  application = prodvana_application.%[2]s.name
+  runtimes = [
+	{
+		runtime = "default"
+	},
+  ]
+}
+
+resource "prodvana_release_channel" "pre2" {
+  name = "pre2"
+  application = prodvana_application.%[2]s.name
+  runtimes = [
+	{
+		runtime = "default"
+	},
+  ]
+}
+
+resource "prodvana_release_channel" "test" {
+  name = "test"
+  application = prodvana_application.%[2]s.name
+  runtimes = [
+	{
+		runtime = "default"
+	},
+  ]
+  release_channel_stable_preconditions = [
+	{
+		  release_channel = prodvana_release_channel.pre.name
+		  duration = "2s"
+	},
+	{
+		  release_channel = prodvana_release_channel.pre2.name
+		  duration = "2s"
+	},
+  ]
+  manual_approval_preconditions = [
+	{
+		name = "approval1"
+	},
+	{
+		name = "approval2"
+	},
+  ]
+}
+`, testAccApplicationResourceConfig(app), app)
+}
+
+func testAccReleaseChannelResourceWithoutPreconditions(app string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "prodvana_release_channel" "pre" {
+  name = "pre"
+  application = prodvana_application.%[2]s.name
+  runtimes = [
+	{
+		runtime = "default"
+	},
+  ]
+}
+
+resource "prodvana_release_channel" "pre2" {
+  name = "pre2"
+  application = prodvana_application.%[2]s.name
+  runtimes = [
+	{
+		runtime = "default"
+	},
+  ]
+}
+
+resource "prodvana_release_channel" "test" {
+  name = "test"
+  application = prodvana_application.%[2]s.name
+  runtimes = [
+	{
+		runtime = "default"
 	},
   ]
 }

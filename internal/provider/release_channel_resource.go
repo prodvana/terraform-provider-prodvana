@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	common_config_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/common_config"
@@ -15,12 +16,15 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -48,6 +52,20 @@ type ReleaseChannelResourceModel struct {
 	Policy      *policyModel                   `tfsdk:"policy"`
 	Runtimes    []*releaseChannelRuntimeConfig `tfsdk:"runtimes"`
 	Application types.String                   `tfsdk:"application"`
+
+	ReleaseChannelStablePreconditions []*releaseChannelStable `tfsdk:"release_channel_stable_preconditions"`
+	ManualApprovalPreconditions       []*manualApproval       `tfsdk:"manual_approval_preconditions"`
+}
+
+type releaseChannelStable struct {
+	ReleaseChannel types.String `tfsdk:"release_channel"`
+	Duration       types.String `tfsdk:"duration"`
+}
+
+type manualApproval struct {
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	EveryAction types.Bool   `tfsdk:"every_action"`
 }
 
 type policyModel struct {
@@ -181,6 +199,48 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 					},
 				},
 			},
+			"release_channel_stable_preconditions": schema.ListNestedAttribute{
+				MarkdownDescription: "Preconditions requiring other release channels to be stable before this release channel can be deployed",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"release_channel": schema.StringAttribute{
+							MarkdownDescription: "name of a release channel that must be in a stable deployment state",
+							Required:            true,
+							Validators:          validators.DefaultNameValidators(),
+						},
+						"duration": schema.StringAttribute{
+							MarkdownDescription: "duration to wait for the release channel to be stable. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`",
+							Required:            true,
+						},
+					},
+				},
+			},
+			"manual_approval_preconditions": schema.ListNestedAttribute{
+				MarkdownDescription: "Preconditions requiring manual approval before this release channel can be deployed",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							MarkdownDescription: "name of the manual approval",
+							Required:            true,
+							Validators:          validators.DefaultNameValidators(),
+						},
+						"description": schema.StringAttribute{
+							MarkdownDescription: "description of the manual approval",
+							Optional:            true,
+							Computed:            true,
+							Default:             stringdefault.StaticString(""),
+						},
+						"every_action": schema.BoolAttribute{
+							MarkdownDescription: "whether this approval is required for every convergence action, or just the first",
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(false),
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -265,6 +325,37 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 		data.Runtimes = runtimeConfigs
 	}
 
+	rcStable := []*releaseChannelStable{}
+	approvals := []*manualApproval{}
+	if config.Preconditions != nil {
+		for _, rc := range config.Preconditions {
+			switch rc.Precondition.(type) {
+			case *rc_pb.Precondition_ReleaseChannelStable_:
+				duration := rc.GetReleaseChannelStable().Duration.AsDuration()
+				precon := &releaseChannelStable{
+					ReleaseChannel: types.StringValue(rc.GetReleaseChannelStable().ReleaseChannel),
+					Duration:       types.StringValue(duration.String()),
+				}
+
+				rcStable = append(rcStable, precon)
+			case *rc_pb.Precondition_ManualApproval_:
+				precon := &manualApproval{
+					Name:        types.StringValue(rc.GetManualApproval().Name),
+					Description: types.StringValue(rc.GetManualApproval().Description),
+					EveryAction: types.BoolValue(rc.GetManualApproval().EveryAction),
+				}
+				approvals = append(approvals, precon)
+			}
+		}
+	}
+
+	if len(rcStable) > 0 {
+		data.ReleaseChannelStablePreconditions = rcStable
+	}
+	if len(approvals) > 0 {
+		data.ManualApprovalPreconditions = approvals
+	}
+
 	return nil
 }
 
@@ -339,10 +430,45 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 			}
 		}
 	}
+
+	preconditions := []*rc_pb.Precondition{}
+	if planData.ReleaseChannelStablePreconditions != nil {
+		for _, rc := range planData.ReleaseChannelStablePreconditions {
+			dur, err := time.ParseDuration(rc.Duration.ValueString())
+			if err != nil {
+				return err
+			}
+
+			preconditions = append(preconditions, &rc_pb.Precondition{
+				Precondition: &rc_pb.Precondition_ReleaseChannelStable_{
+					ReleaseChannelStable: &rc_pb.Precondition_ReleaseChannelStable{
+						ReleaseChannel: rc.ReleaseChannel.ValueString(),
+						Duration:       durationpb.New(dur),
+					},
+				},
+			})
+		}
+	}
+
+	if planData.ManualApprovalPreconditions != nil {
+		for _, approval := range planData.ManualApprovalPreconditions {
+			preconditions = append(preconditions, &rc_pb.Precondition{
+				Precondition: &rc_pb.Precondition_ManualApproval_{
+					ManualApproval: &rc_pb.Precondition_ManualApproval{
+						Name:        approval.Name.ValueString(),
+						Description: approval.Description.ValueString(),
+						EveryAction: approval.EveryAction.ValueBool(),
+					},
+				},
+			})
+		}
+	}
+
 	releaseChannel := &rc_pb.ReleaseChannelConfig{
-		Name:     planData.Name.ValueString(),
-		Runtimes: runtimes,
-		Policy:   policy,
+		Name:          planData.Name.ValueString(),
+		Runtimes:      runtimes,
+		Policy:        policy,
+		Preconditions: preconditions,
 	}
 
 	_, err := r.client.ConfigureReleaseChannel(ctx, &rc_pb.ConfigureReleaseChannelReq{

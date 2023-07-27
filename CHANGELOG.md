@@ -1,5 +1,8 @@
 ## 0.1.6 (Unreleased)
 
+FEATURES:
+ - `prodvana_release_channel` - added ReleaseChannelStable and ManualApproval precondition support
+
 ## 0.1.5
 
 FIXES:
