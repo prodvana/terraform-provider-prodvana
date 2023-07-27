@@ -61,7 +61,9 @@ resource "prodvana_release_channel" "prod" {
 
 ### Optional
 
+- `manual_approval_preconditions` (Attributes List) Preconditions requiring manual approval before this release channel can be deployed (see [below for nested schema](#nestedatt--manual_approval_preconditions))
 - `policy` (Attributes) Release Channel policy applied to all services (see [below for nested schema](#nestedatt--policy))
+- `release_channel_stable_preconditions` (Attributes List) Preconditions requiring other release channels to be stable before this release channel can be deployed (see [below for nested schema](#nestedatt--release_channel_stable_preconditions))
 
 ### Read-Only
 
@@ -78,6 +80,19 @@ Optional:
 - `name` (String) optional identifier for this runtime connection within this release channel
 - `runtime` (String) name of the a runtime
 - `type` (String) type of the runtime connection, one of (EXTENSION, LONG_LIVED_COMPUTE, UNKNOWN_CONNECTION)
+
+
+<a id="nestedatt--manual_approval_preconditions"></a>
+### Nested Schema for `manual_approval_preconditions`
+
+Required:
+
+- `name` (String) name of the manual approval
+
+Optional:
+
+- `description` (String) description of the manual approval
+- `every_action` (Boolean) whether this approval is required for every convergence action, or just the first
 
 
 <a id="nestedatt--policy"></a>
@@ -102,6 +117,17 @@ Optional:
 
 - `key` (String) Name of the secret.
 - `version` (String) Version of the secret
+
+
+
+
+<a id="nestedatt--release_channel_stable_preconditions"></a>
+### Nested Schema for `release_channel_stable_preconditions`
+
+Required:
+
+- `duration` (String) duration to wait for the release channel to be stable. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
+- `release_channel` (String) name of a release channel that must be in a stable deployment state
 
 ## Import
 
