@@ -35,6 +35,90 @@ func (d *ReleaseChannelDataSource) Schema(ctx context.Context, req datasource.Sc
 	connectionTypes := maps.Values(rc_pb.RuntimeConnectionType_name)
 	sort.Strings(connectionTypes)
 
+	protectionSchema := schema.NestedAttributeObject{
+		Attributes: map[string]schema.Attribute{
+			"name": schema.StringAttribute{
+				MarkdownDescription: "name of the protection",
+				Optional:            true,
+				Computed:            true,
+			},
+			"ref": schema.SingleNestedAttribute{
+				MarkdownDescription: "reference to a protection stored in Prodvana",
+				Required:            true,
+				Attributes: map[string]schema.Attribute{
+					"name": schema.StringAttribute{
+						MarkdownDescription: "name of the protection",
+						Required:            true,
+					},
+					"parameters": schema.ListNestedAttribute{
+						MarkdownDescription: "parameters to pass to the protection",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"name": schema.StringAttribute{
+									MarkdownDescription: "name of the parameter",
+									Required:            true,
+								},
+								"string_value": schema.StringAttribute{
+									MarkdownDescription: "parameter string value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set",
+									Optional:            true,
+								},
+								"int_value": schema.Int64Attribute{
+									MarkdownDescription: "parameter int value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set",
+									Optional:            true,
+								},
+								"docker_image_tag_value": schema.StringAttribute{
+									MarkdownDescription: "parameter docker image tag value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set",
+									Optional:            true,
+								},
+								"secret_value": schema.SingleNestedAttribute{
+									MarkdownDescription: "parameter secret value, only one of (string_value, int_value, docker_image_tag_value, secret_value) can be set",
+									Optional:            true,
+									Attributes: map[string]schema.Attribute{
+										"key": schema.StringAttribute{
+											MarkdownDescription: "Name of the secret.",
+											Required:            true,
+										},
+										"version": schema.StringAttribute{
+											MarkdownDescription: "Version of the secret",
+											Required:            true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"pre_approval": schema.SingleNestedAttribute{
+				MarkdownDescription: "pre-approval lifecycle options, enabled if present",
+				Optional:            true,
+			},
+			"post_approval": schema.SingleNestedAttribute{
+				MarkdownDescription: "post-approval lifecycle options, enabled if present",
+				Optional:            true,
+			},
+			"deployment": schema.SingleNestedAttribute{
+				MarkdownDescription: "deployment lifecycle options, enabled if present",
+				Optional:            true,
+			},
+			"post_deployment": schema.SingleNestedAttribute{
+				MarkdownDescription: "post-deployment lifecycle options, enabled if present",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"delay_check_duration": schema.StringAttribute{
+						MarkdownDescription: "delay between the deployment completing and when this protection starts checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`",
+						Optional:            true,
+					},
+					"check_duration": schema.StringAttribute{
+						MarkdownDescription: "how long to keep checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`",
+						Optional:            true,
+					},
+				},
+			},
+		},
+	}
+
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Prodvana Release Channel",
 		Attributes: map[string]schema.Attribute{
@@ -159,6 +243,21 @@ func (d *ReleaseChannelDataSource) Schema(ctx context.Context, req datasource.Sc
 						},
 					},
 				},
+			},
+			"protections": schema.ListNestedAttribute{
+				MarkdownDescription: "Protections applied this release channel",
+				Optional:            true,
+				NestedObject:        protectionSchema,
+			},
+			"service_instance_protections": schema.ListNestedAttribute{
+				MarkdownDescription: "Protections applied to service instances in this release channel",
+				Optional:            true,
+				NestedObject:        protectionSchema,
+			},
+			"convergence_protections": schema.ListNestedAttribute{
+				MarkdownDescription: "Feature Coming Soon",
+				Optional:            true,
+				NestedObject:        protectionSchema,
 			},
 		},
 	}

@@ -171,6 +171,128 @@ func TestAccReleaseChannelResourceWithStablePrecondition(t *testing.T) {
 	})
 }
 
+func TestAccReleaseChannelResourceWithProtections(t *testing.T) {
+	appName := uniqueTestName("rc-tests")
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccReleaseChannelResourceWithProtections(appName, "foo", 10),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
+
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.name", "param-test"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.ref.parameters.0.name", "paramA"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.ref.parameters.0.string_value", "foo"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.ref.parameters.1.name", "paramB"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.ref.parameters.1.int_value", "10"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.ref.parameters.2.name", "paramC"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.ref.parameters.2.secret_value.key", "tf-testing-secret"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.ref.parameters.2.secret_value.version", "tf-testing-secret-0"),
+
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "convergence_protections.0.pre_approval.%"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "convergence_protections.0.post_approval.%"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "convergence_protections.0.deployment.%"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.post_deployment.delay_check_duration", "10s"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.post_deployment.check_duration", "30s"),
+
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.name", "param-test"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.ref.parameters.0.name", "paramA"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.ref.parameters.0.string_value", "foo"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.ref.parameters.1.name", "paramB"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.ref.parameters.1.int_value", "10"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.ref.parameters.2.name", "paramC"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.ref.parameters.2.secret_value.key", "tf-testing-secret"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.ref.parameters.2.secret_value.version", "tf-testing-secret-0"),
+
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "convergence_protections.0.pre_approval.%"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "convergence_protections.0.post_approval.%"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "convergence_protections.0.deployment.%"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.post_deployment.delay_check_duration", "10s"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.post_deployment.check_duration", "30s"),
+
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.name", "param-test"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.ref.parameters.0.name", "paramA"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.ref.parameters.0.string_value", "foo"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.ref.parameters.1.name", "paramB"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.ref.parameters.1.int_value", "10"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.ref.parameters.2.name", "paramC"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.ref.parameters.2.secret_value.key", "tf-testing-secret"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.ref.parameters.2.secret_value.version", "tf-testing-secret-0"),
+
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "service_instance_protections.0.pre_approval.%"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "service_instance_protections.0.post_approval.%"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "service_instance_protections.0.deployment.%"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.post_deployment.delay_check_duration", "10s"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.post_deployment.check_duration", "30s"),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      "prodvana_release_channel.test",
+				ImportStateId:     appName + "/test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Update and Read testing
+			{
+				Config: testAccReleaseChannelResourceWithProtections(appName, "bar", 20),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
+
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.name", "param-test"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.ref.parameters.0.name", "paramA"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.ref.parameters.0.string_value", "bar"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.ref.parameters.1.name", "paramB"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.ref.parameters.1.int_value", "20"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.ref.parameters.2.name", "paramC"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.ref.parameters.2.secret_value.key", "tf-testing-secret"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.ref.parameters.2.secret_value.version", "tf-testing-secret-0"),
+
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "protections.0.pre_approval.%"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "protections.0.post_approval.%"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "protections.0.deployment.%"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.post_deployment.delay_check_duration", "10s"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "protections.0.post_deployment.check_duration", "30s"),
+
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.name", "param-test"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.ref.parameters.0.name", "paramA"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.ref.parameters.0.string_value", "bar"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.ref.parameters.1.name", "paramB"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.ref.parameters.1.int_value", "20"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.ref.parameters.2.name", "paramC"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.ref.parameters.2.secret_value.key", "tf-testing-secret"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.ref.parameters.2.secret_value.version", "tf-testing-secret-0"),
+
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "convergence_protections.0.pre_approval.%"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "convergence_protections.0.post_approval.%"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "convergence_protections.0.deployment.%"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.post_deployment.delay_check_duration", "10s"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "convergence_protections.0.post_deployment.check_duration", "30s"),
+
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.name", "param-test"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.ref.parameters.0.name", "paramA"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.ref.parameters.0.string_value", "bar"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.ref.parameters.1.name", "paramB"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.ref.parameters.1.int_value", "20"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.ref.parameters.2.name", "paramC"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.ref.parameters.2.secret_value.key", "tf-testing-secret"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.ref.parameters.2.secret_value.version", "tf-testing-secret-0"),
+
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "service_instance_protections.0.pre_approval.%"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "service_instance_protections.0.post_approval.%"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.test", "service_instance_protections.0.deployment.%"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.post_deployment.delay_check_duration", "10s"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "service_instance_protections.0.post_deployment.check_duration", "30s"),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
 func testAccReleaseChannelResourceWithRuntimeType(app string) string {
 	return fmt.Sprintf(`
 %[1]s
@@ -319,4 +441,116 @@ resource "prodvana_release_channel" "%[2]s" {
   %[4]s
 }
 `, testAccApplicationResourceConfig(app), name, app, policy)
+}
+
+func testAccReleaseChannelResourceWithProtections(app string, paramA string, paramB int64) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "prodvana_release_channel" "test" {
+  name = "test"
+  application = prodvana_application.%[2]s.name
+  runtimes = [
+	{
+		runtime = "default"
+	},
+  ]
+  protections = [
+    {
+		ref = {
+		  name = "param-test"
+		  parameters = [
+		  	{
+		  		name = "paramA"
+		  		string_value = %[3]q
+		  	},
+		  	{
+		  		name = "paramB"
+		  		int_value = %[4]d
+		  	},
+		  	{
+		  		name = "paramC"
+		  		secret_value = {
+					key = "tf-testing-secret"
+					version = "tf-testing-secret-0"
+				}
+		  	},
+		  ]
+		}
+		pre_approval = {}
+		post_approval = {}
+		deployment = {}
+		post_deployment = {
+			delay_check_duration = "10s"
+			check_duration = "30s"
+
+		}
+	}
+  ]
+  convergence_protections = [
+    {
+		ref = {
+		  name = "param-test"
+		  parameters = [
+		  	{
+		  		name = "paramA"
+		  		string_value = %[3]q
+		  	},
+		  	{
+		  		name = "paramB"
+		  		int_value = %[4]d
+		  	},
+		  	{
+		  		name = "paramC"
+		  		secret_value = {
+					key = "tf-testing-secret"
+					version = "tf-testing-secret-0"
+				}
+		  	},
+		  ]
+		}
+		pre_approval = {}
+		post_approval = {}
+		deployment = {}
+		post_deployment = {
+			delay_check_duration = "10s"
+			check_duration = "30s"
+
+		}
+	}
+  ]
+  service_instance_protections = [
+    {
+		ref = {
+		  name = "param-test"
+		  parameters = [
+		  	{
+		  		name = "paramA"
+		  		string_value = %[3]q
+		  	},
+		  	{
+		  		name = "paramB"
+		  		int_value = %[4]d
+		  	},
+		  	{
+		  		name = "paramC"
+		  		secret_value = {
+					key = "tf-testing-secret"
+					version = "tf-testing-secret-0"
+				}
+		  	},
+		  ]
+		}
+		pre_approval = {}
+		post_approval = {}
+		deployment = {}
+		post_deployment = {
+			delay_check_duration = "10s"
+			check_duration = "30s"
+
+		}
+	}
+  ]
+}
+`, testAccApplicationResourceConfig(app), app, paramA, paramB)
 }
