@@ -122,6 +122,44 @@ func (d *ReleaseChannelDataSource) Schema(ctx context.Context, req datasource.Sc
 					},
 				},
 			},
+			"release_channel_stable_preconditions": schema.ListNestedAttribute{
+				MarkdownDescription: "Preconditions requiring other release channels to be stable before this release channel can be deployed",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"release_channel": schema.StringAttribute{
+							MarkdownDescription: "name of a release channel that must be in a stable deployment state",
+							Required:            true,
+							Validators:          validators.DefaultNameValidators(),
+						},
+						"duration": schema.StringAttribute{
+							MarkdownDescription: "duration to wait for the release channel to be stable. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`",
+							Required:            true,
+						},
+					},
+				},
+			},
+			"manual_approval_preconditions": schema.ListNestedAttribute{
+				MarkdownDescription: "Preconditions requiring manual approval before this release channel can be deployed",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							MarkdownDescription: "name of the manual approval",
+							Required:            true,
+							Validators:          validators.DefaultNameValidators(),
+						},
+						"description": schema.StringAttribute{
+							MarkdownDescription: "description of the manual approval",
+							Optional:            true,
+						},
+						"every_action": schema.BoolAttribute{
+							MarkdownDescription: "whether to require manual approval for every action, or just the first",
+							Optional:            true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
