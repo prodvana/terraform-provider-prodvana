@@ -521,10 +521,17 @@ resource "prodvana_release_channel" "test" {
 		  	},
 		  ]
 		}
-		pre_approval = {}
-		post_approval = {}
-		deployment = {}
+		pre_approval = {
+			enabled = true
+		}
+		post_approval = {
+			enabled = true
+		}
+		deployment = {
+			enabled = true
+		}
 		post_deployment = {
+			enabled = true
 			delay_check_duration = "10s"
 			check_duration = "30s"
 
@@ -553,10 +560,17 @@ resource "prodvana_release_channel" "test" {
 		  	},
 		  ]
 		}
-		pre_approval = {}
-		post_approval = {}
-		deployment = {}
+		pre_approval = {
+			enabled = true
+		}
+		post_approval = {
+			enabled = true
+		}
+		deployment = {
+			enabled = true
+		}
 		post_deployment = {
+			enabled = true
 			delay_check_duration = "10s"
 			check_duration = "30s"
 
@@ -585,10 +599,17 @@ resource "prodvana_release_channel" "test" {
 		  	},
 		  ]
 		}
-		pre_approval = {}
-		post_approval = {}
-		deployment = {}
+		pre_approval = {
+			enabled = true
+		}
+		post_approval = {
+			enabled = true
+		}
+		deployment = {
+			enabled = true
+		}
 		post_deployment = {
+			enabled = true
 			delay_check_duration = "10s"
 			check_duration = "30s"
 

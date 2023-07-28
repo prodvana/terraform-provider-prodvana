@@ -104,11 +104,11 @@ Required:
 
 Optional:
 
-- `deployment` (Attributes) deployment lifecycle options, enabled if present (see [below for nested schema](#nestedatt--convergence_protections--deployment))
+- `deployment` (Attributes) deployment lifecycle options (see [below for nested schema](#nestedatt--convergence_protections--deployment))
 - `name` (String) name of the protection
-- `post_approval` (Attributes) post-approval lifecycle options, enabled if present (see [below for nested schema](#nestedatt--convergence_protections--post_approval))
-- `post_deployment` (Attributes) post-deployment lifecycle options, enabled if present (see [below for nested schema](#nestedatt--convergence_protections--post_deployment))
-- `pre_approval` (Attributes) pre-approval lifecycle options, enabled if present (see [below for nested schema](#nestedatt--convergence_protections--pre_approval))
+- `post_approval` (Attributes) post-approval lifecycle options (see [below for nested schema](#nestedatt--convergence_protections--post_approval))
+- `post_deployment` (Attributes) post-deployment lifecycle options (see [below for nested schema](#nestedatt--convergence_protections--post_deployment))
+- `pre_approval` (Attributes) pre-approval lifecycle options (see [below for nested schema](#nestedatt--convergence_protections--pre_approval))
 
 <a id="nestedatt--convergence_protections--ref"></a>
 ### Nested Schema for `convergence_protections.ref`
@@ -149,9 +149,17 @@ Required:
 <a id="nestedatt--convergence_protections--deployment"></a>
 ### Nested Schema for `convergence_protections.deployment`
 
+Optional:
+
+- `enabled` (Boolean) whether to enable deployment lifecycle options
+
 
 <a id="nestedatt--convergence_protections--post_approval"></a>
 ### Nested Schema for `convergence_protections.post_approval`
+
+Optional:
+
+- `enabled` (Boolean) whether to enable post-approval lifecycle options
 
 
 <a id="nestedatt--convergence_protections--post_deployment"></a>
@@ -161,10 +169,15 @@ Optional:
 
 - `check_duration` (String) how long to keep checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
 - `delay_check_duration` (String) delay between the deployment completing and when this protection starts checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
+- `enabled` (Boolean) whether to enable post-deployment lifecycle options
 
 
 <a id="nestedatt--convergence_protections--pre_approval"></a>
 ### Nested Schema for `convergence_protections.pre_approval`
+
+Optional:
+
+- `enabled` (Boolean) whether to enable pre-approval lifecycle options
 
 
 
@@ -216,11 +229,11 @@ Required:
 
 Optional:
 
-- `deployment` (Attributes) deployment lifecycle options, enabled if present (see [below for nested schema](#nestedatt--protections--deployment))
+- `deployment` (Attributes) deployment lifecycle options (see [below for nested schema](#nestedatt--protections--deployment))
 - `name` (String) name of the protection
-- `post_approval` (Attributes) post-approval lifecycle options, enabled if present (see [below for nested schema](#nestedatt--protections--post_approval))
-- `post_deployment` (Attributes) post-deployment lifecycle options, enabled if present (see [below for nested schema](#nestedatt--protections--post_deployment))
-- `pre_approval` (Attributes) pre-approval lifecycle options, enabled if present (see [below for nested schema](#nestedatt--protections--pre_approval))
+- `post_approval` (Attributes) post-approval lifecycle options (see [below for nested schema](#nestedatt--protections--post_approval))
+- `post_deployment` (Attributes) post-deployment lifecycle options (see [below for nested schema](#nestedatt--protections--post_deployment))
+- `pre_approval` (Attributes) pre-approval lifecycle options (see [below for nested schema](#nestedatt--protections--pre_approval))
 
 <a id="nestedatt--protections--ref"></a>
 ### Nested Schema for `protections.ref`
@@ -261,9 +274,17 @@ Required:
 <a id="nestedatt--protections--deployment"></a>
 ### Nested Schema for `protections.deployment`
 
+Optional:
+
+- `enabled` (Boolean) whether to enable deployment lifecycle options
+
 
 <a id="nestedatt--protections--post_approval"></a>
 ### Nested Schema for `protections.post_approval`
+
+Optional:
+
+- `enabled` (Boolean) whether to enable post-approval lifecycle options
 
 
 <a id="nestedatt--protections--post_deployment"></a>
@@ -273,10 +294,15 @@ Optional:
 
 - `check_duration` (String) how long to keep checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
 - `delay_check_duration` (String) delay between the deployment completing and when this protection starts checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
+- `enabled` (Boolean) whether to enable post-deployment lifecycle options
 
 
 <a id="nestedatt--protections--pre_approval"></a>
 ### Nested Schema for `protections.pre_approval`
+
+Optional:
+
+- `enabled` (Boolean) whether to enable pre-approval lifecycle options
 
 
 
@@ -298,11 +324,11 @@ Required:
 
 Optional:
 
-- `deployment` (Attributes) deployment lifecycle options, enabled if present (see [below for nested schema](#nestedatt--service_instance_protections--deployment))
+- `deployment` (Attributes) deployment lifecycle options (see [below for nested schema](#nestedatt--service_instance_protections--deployment))
 - `name` (String) name of the protection
-- `post_approval` (Attributes) post-approval lifecycle options, enabled if present (see [below for nested schema](#nestedatt--service_instance_protections--post_approval))
-- `post_deployment` (Attributes) post-deployment lifecycle options, enabled if present (see [below for nested schema](#nestedatt--service_instance_protections--post_deployment))
-- `pre_approval` (Attributes) pre-approval lifecycle options, enabled if present (see [below for nested schema](#nestedatt--service_instance_protections--pre_approval))
+- `post_approval` (Attributes) post-approval lifecycle options (see [below for nested schema](#nestedatt--service_instance_protections--post_approval))
+- `post_deployment` (Attributes) post-deployment lifecycle options (see [below for nested schema](#nestedatt--service_instance_protections--post_deployment))
+- `pre_approval` (Attributes) pre-approval lifecycle options (see [below for nested schema](#nestedatt--service_instance_protections--pre_approval))
 
 <a id="nestedatt--service_instance_protections--ref"></a>
 ### Nested Schema for `service_instance_protections.ref`
@@ -343,9 +369,17 @@ Required:
 <a id="nestedatt--service_instance_protections--deployment"></a>
 ### Nested Schema for `service_instance_protections.deployment`
 
+Optional:
+
+- `enabled` (Boolean) whether to enable deployment lifecycle options
+
 
 <a id="nestedatt--service_instance_protections--post_approval"></a>
 ### Nested Schema for `service_instance_protections.post_approval`
+
+Optional:
+
+- `enabled` (Boolean) whether to enable post-approval lifecycle options
 
 
 <a id="nestedatt--service_instance_protections--post_deployment"></a>
@@ -355,10 +389,15 @@ Optional:
 
 - `check_duration` (String) how long to keep checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
 - `delay_check_duration` (String) delay between the deployment completing and when this protection starts checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
+- `enabled` (Boolean) whether to enable post-deployment lifecycle options
 
 
 <a id="nestedatt--service_instance_protections--pre_approval"></a>
 ### Nested Schema for `service_instance_protections.pre_approval`
+
+Optional:
+
+- `enabled` (Boolean) whether to enable pre-approval lifecycle options
 
 ## Import
 
