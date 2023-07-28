@@ -22,11 +22,18 @@ type protectionReference struct {
 	Name       types.String      `tfsdk:"name"`
 	Parameters []*parameterValue `tfsdk:"parameters"`
 }
-type preApproval struct{}
-type postApproval struct{}
-type deployment struct{}
+type preApproval struct {
+	Enabled types.Bool `tfsdk:"enabled"`
+}
+type postApproval struct {
+	Enabled types.Bool `tfsdk:"enabled"`
+}
+type deployment struct {
+	Enabled types.Bool `tfsdk:"enabled"`
+}
 
 type postDeployment struct {
+	Enabled            types.Bool   `tfsdk:"enabled"`
 	DelayCheckDuration types.String `tfsdk:"delay_check_duration"`
 	CheckDuration      types.String `tfsdk:"check_duration"`
 }
@@ -83,28 +90,28 @@ func (pa *protectionAttachment) AsProto() (*prot_pb.ProtectionAttachmentConfig, 
 	}
 
 	lifecycles := []*prot_pb.ProtectionLifecycle{}
-	if pa.PreApproval != nil {
+	if pa.PreApproval != nil && pa.PreApproval.Enabled.ValueBool() {
 		lifecycles = append(lifecycles, &prot_pb.ProtectionLifecycle{
 			Lifecycle: &prot_pb.ProtectionLifecycle_PreApproval_{
 				PreApproval: &prot_pb.ProtectionLifecycle_PreApproval{},
 			},
 		})
 	}
-	if pa.PostApproval != nil {
+	if pa.PostApproval != nil && pa.PostApproval.Enabled.ValueBool() {
 		lifecycles = append(lifecycles, &prot_pb.ProtectionLifecycle{
 			Lifecycle: &prot_pb.ProtectionLifecycle_PostApproval_{
 				PostApproval: &prot_pb.ProtectionLifecycle_PostApproval{},
 			},
 		})
 	}
-	if pa.Deployment != nil {
+	if pa.Deployment != nil && pa.Deployment.Enabled.ValueBool() {
 		lifecycles = append(lifecycles, &prot_pb.ProtectionLifecycle{
 			Lifecycle: &prot_pb.ProtectionLifecycle_Deployment_{
 				Deployment: &prot_pb.ProtectionLifecycle_Deployment{},
 			},
 		})
 	}
-	if pa.PostDeployment != nil {
+	if pa.PostDeployment != nil && pa.PostDeployment.Enabled.ValueBool() {
 		delayDuration, err := time.ParseDuration(pa.PostDeployment.DelayCheckDuration.ValueString())
 		if err != nil {
 			return nil, err
@@ -172,15 +179,22 @@ func ProtectionAttachmentProtoToTerraform(pa *prot_pb.ProtectionAttachmentConfig
 	for _, lifecycle := range pa.Lifecycle {
 		switch lifecycle.Lifecycle.(type) {
 		case *prot_pb.ProtectionLifecycle_PreApproval_:
-			attachment.PreApproval = &preApproval{}
+			attachment.PreApproval = &preApproval{
+				Enabled: types.BoolValue(true),
+			}
 		case *prot_pb.ProtectionLifecycle_PostApproval_:
-			attachment.PostApproval = &postApproval{}
+			attachment.PostApproval = &postApproval{
+				Enabled: types.BoolValue(true),
+			}
 		case *prot_pb.ProtectionLifecycle_Deployment_:
-			attachment.Deployment = &deployment{}
+			attachment.Deployment = &deployment{
+				Enabled: types.BoolValue(true),
+			}
 		case *prot_pb.ProtectionLifecycle_PostDeployment_:
 			delayDuration := lifecycle.GetPostDeployment().DelayCheckDuration.AsDuration()
 			checkDuration := lifecycle.GetPostDeployment().CheckDuration.AsDuration()
 			attachment.PostDeployment = &postDeployment{
+				Enabled:            types.BoolValue(true),
 				DelayCheckDuration: types.StringValue(delayDuration.String()),
 				CheckDuration:      types.StringValue(checkDuration.String()),
 			}
