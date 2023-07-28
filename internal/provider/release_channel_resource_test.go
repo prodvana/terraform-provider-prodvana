@@ -293,6 +293,50 @@ func TestAccReleaseChannelResourceWithProtections(t *testing.T) {
 	})
 }
 
+func TestAccReleaseChannelResourceWithConstant(t *testing.T) {
+	appName := uniqueTestName("rc-tests")
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccReleaseChannelResourceWithConstant(appName, "foo", "bar"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "constants.0.name", "foo"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "constants.0.string_value", "bar"),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      "prodvana_release_channel.test",
+				ImportStateId:     appName + "/test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Update and Read testing
+			{
+				Config: testAccReleaseChannelResourceWithConstant(appName, "foo", "baz"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "constants.0.name", "foo"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "constants.0.string_value", "baz"),
+				),
+			},
+			{
+				Config: testAccReleaseChannelResourceWithConstant(appName, "bar", "bee"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "constants.0.name", "bar"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "constants.0.string_value", "bee"),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
 func testAccReleaseChannelResourceWithRuntimeType(app string) string {
 	return fmt.Sprintf(`
 %[1]s
@@ -553,4 +597,26 @@ resource "prodvana_release_channel" "test" {
   ]
 }
 `, testAccApplicationResourceConfig(app), app, paramA, paramB)
+}
+
+func testAccReleaseChannelResourceWithConstant(app string, key, value string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "prodvana_release_channel" "test" {
+  name = "test"
+  application = prodvana_application.%[2]s.name
+  runtimes = [
+	{
+		runtime = "default"
+	},
+  ]
+  constants = [
+    {
+		name = %[3]q
+		string_value = %[4]q
+	}
+  ]
+}
+`, testAccApplicationResourceConfig(app), app, key, value)
 }

@@ -4,6 +4,7 @@ FEATURES:
  - `prodvana_release_channel`
    - added ReleaseChannelStable and ManualApproval precondition support
    - Added Protections support
+   - Added Constants support
 
 ## 0.1.5
 

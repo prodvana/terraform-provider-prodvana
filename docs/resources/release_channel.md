@@ -61,6 +61,7 @@ resource "prodvana_release_channel" "prod" {
 
 ### Optional
 
+- `constants` (Attributes List) Constant values for this release channel (see [below for nested schema](#nestedatt--constants))
 - `convergence_protections` (Attributes List) Feature Coming Soon (see [below for nested schema](#nestedatt--convergence_protections))
 - `manual_approval_preconditions` (Attributes List) Preconditions requiring manual approval before this release channel can be deployed (see [below for nested schema](#nestedatt--manual_approval_preconditions))
 - `policy` (Attributes) Release Channel policy applied to all services (see [below for nested schema](#nestedatt--policy))
@@ -83,6 +84,15 @@ Optional:
 - `name` (String) optional identifier for this runtime connection within this release channel
 - `runtime` (String) name of the a runtime
 - `type` (String) type of the runtime connection, one of (EXTENSION, LONG_LIVED_COMPUTE, UNKNOWN_CONNECTION)
+
+
+<a id="nestedatt--constants"></a>
+### Nested Schema for `constants`
+
+Required:
+
+- `name` (String) name of the constant
+- `string_value` (String) string value of the constant
 
 
 <a id="nestedatt--convergence_protections"></a>

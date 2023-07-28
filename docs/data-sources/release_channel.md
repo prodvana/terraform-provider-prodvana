@@ -29,6 +29,7 @@ data "prodvana_release_channel" "example" {
 
 ### Optional
 
+- `constants` (Attributes List) Constant values for this release channel (see [below for nested schema](#nestedatt--constants))
 - `convergence_protections` (Attributes List) Feature Coming Soon (see [below for nested schema](#nestedatt--convergence_protections))
 - `manual_approval_preconditions` (Attributes List) Preconditions requiring manual approval before this release channel can be deployed (see [below for nested schema](#nestedatt--manual_approval_preconditions))
 - `policy` (Attributes) Release Channel policy applied to all services (see [below for nested schema](#nestedatt--policy))
@@ -41,6 +42,15 @@ data "prodvana_release_channel" "example" {
 - `id` (String) Release channel identifier
 - `runtimes` (Attributes List) Release Channel policy applied to all services (see [below for nested schema](#nestedatt--runtimes))
 - `version` (String) Current application version
+
+<a id="nestedatt--constants"></a>
+### Nested Schema for `constants`
+
+Required:
+
+- `name` (String) name of the constant
+- `string_value` (String) string value of the constant
+
 
 <a id="nestedatt--convergence_protections"></a>
 ### Nested Schema for `convergence_protections`
