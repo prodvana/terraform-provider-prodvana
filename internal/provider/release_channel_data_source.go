@@ -91,21 +91,47 @@ func (d *ReleaseChannelDataSource) Schema(ctx context.Context, req datasource.Sc
 				},
 			},
 			"pre_approval": schema.SingleNestedAttribute{
-				MarkdownDescription: "pre-approval lifecycle options, enabled if present",
-				Optional:            true,
-			},
-			"post_approval": schema.SingleNestedAttribute{
-				MarkdownDescription: "post-approval lifecycle options, enabled if present",
-				Optional:            true,
-			},
-			"deployment": schema.SingleNestedAttribute{
-				MarkdownDescription: "deployment lifecycle options, enabled if present",
-				Optional:            true,
-			},
-			"post_deployment": schema.SingleNestedAttribute{
-				MarkdownDescription: "post-deployment lifecycle options, enabled if present",
+				MarkdownDescription: "pre-approval lifecycle options",
 				Optional:            true,
 				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						MarkdownDescription: "whether to enable pre-approval lifecycle options",
+						Optional:            true,
+						Computed:            true,
+					},
+				},
+			},
+			"post_approval": schema.SingleNestedAttribute{
+				MarkdownDescription: "post-approval lifecycle options",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						MarkdownDescription: "whether to enable post-approval lifecycle options",
+						Optional:            true,
+						Computed:            true,
+					},
+				},
+			},
+			"deployment": schema.SingleNestedAttribute{
+				MarkdownDescription: "deployment lifecycle options",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						MarkdownDescription: "whether to enable deployment lifecycle options",
+						Optional:            true,
+						Computed:            true,
+					},
+				},
+			},
+			"post_deployment": schema.SingleNestedAttribute{
+				MarkdownDescription: "post-deployment lifecycle options",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						MarkdownDescription: "whether to enable post-deployment lifecycle options",
+						Optional:            true,
+						Computed:            true,
+					},
 					"delay_check_duration": schema.StringAttribute{
 						MarkdownDescription: "delay between the deployment completing and when this protection starts checking. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`",
 						Optional:            true,
