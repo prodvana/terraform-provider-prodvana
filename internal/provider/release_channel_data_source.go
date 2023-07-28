@@ -259,6 +259,22 @@ func (d *ReleaseChannelDataSource) Schema(ctx context.Context, req datasource.Sc
 				Optional:            true,
 				NestedObject:        protectionSchema,
 			},
+			"constants": schema.ListNestedAttribute{
+				MarkdownDescription: "Constant values for this release channel",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							MarkdownDescription: "name of the constant",
+							Required:            true,
+						},
+						"string_value": schema.StringAttribute{
+							MarkdownDescription: "string value of the constant",
+							Required:            true,
+						},
+					},
+				},
+			},
 		},
 	}
 }

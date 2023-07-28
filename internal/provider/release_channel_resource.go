@@ -62,6 +62,13 @@ type ReleaseChannelResourceModel struct {
 	Protections                []*protectionAttachment `tfsdk:"protections"`
 	ConvergenceProtections     []*protectionAttachment `tfsdk:"convergence_protections"`
 	ServiceInstanceProtections []*protectionAttachment `tfsdk:"service_instance_protections"`
+
+	Constants []*constant `tfsdk:"constants"`
+}
+
+type constant struct {
+	Name        types.String `tfsdk:"name"`
+	StringValue types.String `tfsdk:"string_value"`
 }
 
 type releaseChannelStable struct {
@@ -377,6 +384,25 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 				Optional:            true,
 				NestedObject:        protectionSchema,
 			},
+			"constants": schema.ListNestedAttribute{
+				MarkdownDescription: "Constant values for this release channel",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							MarkdownDescription: "name of the constant",
+							Required:            true,
+							Validators: []validator.String{
+								stringvalidator.LengthAtLeast(1),
+							},
+						},
+						"string_value": schema.StringAttribute{
+							MarkdownDescription: "string value of the constant",
+							Required:            true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -518,6 +544,17 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 		}
 	}
 
+	if config.Constants != nil {
+		constants := []*constant{}
+		for _, c := range config.Constants {
+			constants = append(constants, &constant{
+				Name:        types.StringValue(c.Name),
+				StringValue: types.StringValue(c.GetString_().Value),
+			})
+		}
+		data.Constants = constants
+	}
+
 	return nil
 }
 
@@ -653,6 +690,20 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 		return err
 	}
 
+	constants := []*common_config_pb.Constant{}
+	if planData.Constants != nil {
+		for _, c := range planData.Constants {
+			constants = append(constants, &common_config_pb.Constant{
+				Name: c.Name.ValueString(),
+				ConfigOneof: &common_config_pb.Constant_String_{
+					String_: &common_config_pb.StringConstant{
+						Value: c.StringValue.ValueString(),
+					},
+				},
+			})
+		}
+	}
+
 	releaseChannel := &rc_pb.ReleaseChannelConfig{
 		Name:                       planData.Name.ValueString(),
 		Runtimes:                   runtimes,
@@ -661,6 +712,7 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 		Protections:                protections,
 		ConvergenceProtections:     convergenceProtections,
 		ServiceInstanceProtections: svcInstanceProtections,
+		Constants:                  constants,
 	}
 
 	_, err = r.client.ConfigureReleaseChannel(ctx, &rc_pb.ConfigureReleaseChannelReq{
