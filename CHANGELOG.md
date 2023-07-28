@@ -1,4 +1,6 @@
-## 0.1.6 (Unreleased)
+## 0.1.7 (Unreleased)
+
+## 0.1.6
 
 FEATURES:
  - `prodvana_release_channel`
