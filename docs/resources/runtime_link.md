@@ -46,9 +46,9 @@ resource "kubernetes_deployment_v1" "agent" {
           args = [
             "/agent",
             "--clusterid",
-            prodvana_runtime.example.id,
+            prodvana_k8s_runtime.example.id,
             "--auth",
-            prodvana_runtime.agent_api_token,
+            prodvana_k8_runtime.agent_api_token,
             "--server-addr",
             "api.<org_slug>.prodvana.io",
           ]
@@ -62,7 +62,7 @@ resource "kubernetes_deployment_v1" "agent" {
 # this resource will complete only after the agent
 # registers itself with the Prodvana API
 resource "prodvana_runtime_link" "example" {
-  id = prodvana_runtime.example.id
+  id = prodvana_k8s_runtime.example.id
 }
 
 resource "prodvana_release_channel" "example" {
