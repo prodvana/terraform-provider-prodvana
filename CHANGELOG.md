@@ -1,4 +1,11 @@
-## 0.1.8 (Unreleased)
+## 0.1.9 (Unreleased)
+
+## 0.1.8
+
+FIXES:
+  - Added the `enabled` field to `prodvana_release_channel` protection lifecycle objects
+    - This helps with CDK compatibility 
+
 
 ## 0.1.7
 
