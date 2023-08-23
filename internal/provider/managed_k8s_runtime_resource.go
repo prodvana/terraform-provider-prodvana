@@ -204,18 +204,18 @@ func (r *ManagedK8sRuntimeResource) initializeConfiguration(ctx context.Context,
 		exec.APIVersion = planData.Exec.ApiVersion.ValueString()
 		exec.Command = planData.Exec.Command.ValueString()
 		if !planData.Exec.Args.IsNull() {
-			argDiags := planData.Exec.Args.ElementsAs(ctx, exec.Args, false)
+			argDiags := planData.Exec.Args.ElementsAs(ctx, &exec.Args, false)
 			if argDiags.HasError() {
 				diags.Append(argDiags...)
-				return nil, errors.Errorf("Failed to parse exec args")
+				return nil, errors.Errorf("Failed to parse exec args: %v", argDiags.Errors())
 			}
 		}
 		if !planData.Exec.Env.IsNull() {
 			envs := map[string]string{}
-			envDiags := planData.Exec.Env.ElementsAs(ctx, envs, false)
+			envDiags := planData.Exec.Env.ElementsAs(ctx, &envs, false)
 			if envDiags.HasError() {
 				diags.Append(envDiags...)
-				return nil, errors.Errorf("Failed to parse exec env")
+				return nil, errors.Errorf("Failed to parse exec env: %v", envDiags.Errors())
 			}
 			exec.Env = []clientcmdapi.ExecEnvVar{}
 			for kk, vv := range envs {

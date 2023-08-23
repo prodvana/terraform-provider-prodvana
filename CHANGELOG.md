@@ -1,4 +1,9 @@
-## 0.1.9 (Unreleased)
+## 0.1.10 (Unreleased)
+
+## 0.1.9
+
+FIXES:
+  - Fixed a bug when setting the properties `exec.args` and `exec.env` on `prodvana_managed_k8s_runtime`
 
 ## 0.1.8
 
