@@ -191,7 +191,7 @@ Required:
 Optional:
 
 - `description` (String) description of the manual approval
-- `every_action` (Boolean) whether this approval is required for every convergence action, or just the first
+- `every_action` (Boolean) whether this approval is required for every convergence action, or just the first. This only works for runtime extensions and Terraform runners. Setting this field to true will not result in any approvals being requested for Kubernetes services.
 
 
 <a id="nestedatt--policy"></a>
