@@ -391,7 +391,7 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 							Default:             stringdefault.StaticString(""),
 						},
 						"every_action": schema.BoolAttribute{
-							MarkdownDescription: "whether this approval is required for every convergence action, or just the first",
+							MarkdownDescription: "whether this approval is required for every convergence action, or just the first. This only works for runtime extensions and Terraform runners. Setting this field to true will not result in any approvals being requested for Kubernetes services.",
 							Optional:            true,
 							Computed:            true,
 							Default:             booldefault.StaticBool(false),
