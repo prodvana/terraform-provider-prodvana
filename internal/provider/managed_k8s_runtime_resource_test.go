@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/prodvana/terraform-provider-prodvana/internal/provider/labels"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
@@ -23,9 +24,15 @@ func TestAccManagedK8sRuntimeResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "foo", map[string]string{
-					"foo": "bar",
-					"baz": "qux",
+				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "foo", []labels.LabelDefinition{
+					{
+						Label: "foo",
+						Value: "bar",
+					},
+					{
+						Label: "baz",
+						Value: "qux",
+					},
 				}),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "name", runtimeName),
@@ -39,8 +46,11 @@ func TestAccManagedK8sRuntimeResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "bar", map[string]string{
-					"foo": "notbar",
+				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "bar", []labels.LabelDefinition{
+					{
+						Label: "foo",
+						Value: "notbar",
+					},
 				}),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "name", runtimeName),
@@ -219,15 +229,15 @@ func TestAccManagedK8sRuntimeResourceK8sAuth(t *testing.T) {
 	})
 }
 
-func testAccManagedK8sRuntimeResourceConfig(name string, proxy string, labels map[string]string) string {
+func testAccManagedK8sRuntimeResourceConfig(name string, proxy string, labels []labels.LabelDefinition) string {
 	labelStr := ""
-	for k, v := range labels {
+	for _, label := range labels {
 		labelStr += fmt.Sprintf(`
 		{
 			label = %[1]q
 			value = %[2]q
 		},
-		`, k, v)
+		`, label.Label, label.Value)
 	}
 	return fmt.Sprintf(`
 resource "prodvana_managed_k8s_runtime" "%[1]s" {

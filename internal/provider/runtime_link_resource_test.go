@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/prodvana/terraform-provider-prodvana/internal/provider/labels"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -79,9 +80,15 @@ func TestAccRuntimeLinkResourceFullFlow(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccK8sRuntimeLinkResourceConfigFullFlow(runtimeName, map[string]string{
-					"foo": "bar",
-					"baz": "qux",
+				Config: testAccK8sRuntimeLinkResourceConfigFullFlow(runtimeName, []labels.LabelDefinition{
+					{
+						Label: "foo",
+						Value: "bar",
+					},
+					{
+						Label: "baz",
+						Value: "qux",
+					},
 				}, cfgPath, context),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("prodvana_runtime_link.test", "id"),
@@ -94,8 +101,11 @@ func TestAccRuntimeLinkResourceFullFlow(t *testing.T) {
 			},
 			// Update and Read test
 			{
-				Config: testAccK8sRuntimeLinkResourceConfigFullFlow(runtimeName, map[string]string{
-					"foo": "notbar",
+				Config: testAccK8sRuntimeLinkResourceConfigFullFlow(runtimeName, []labels.LabelDefinition{
+					{
+						Label: "foo",
+						Value: "notbar",
+					},
 				}, cfgPath, context),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("prodvana_runtime_link.test", "id"),
@@ -133,15 +143,15 @@ resource "prodvana_runtime_link" "test" {
 `, name)
 }
 
-func testAccK8sRuntimeLinkResourceConfigFullFlow(name string, labels map[string]string, configPath, context string) string {
+func testAccK8sRuntimeLinkResourceConfigFullFlow(name string, labels []labels.LabelDefinition, configPath, context string) string {
 	labelStr := ""
-	for k, v := range labels {
+	for _, label := range labels {
 		labelStr += fmt.Sprintf(`
 		{
 			label = %[1]q
 			value = %[2]q
 		},
-		`, k, v)
+		`, label.Label, label.Value)
 	}
 
 	return fmt.Sprintf(`
