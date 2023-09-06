@@ -28,6 +28,9 @@ resource "prodvana_k8s_runtime" "example" {
 ### Read-Only
 
 - `agent_api_token` (String, Sensitive) API Token used for linking the Kubernetes Prodvana agent
+- `agent_args` (List of String, Sensitive) Arguments to pass to the Kubernetes Prodvana agent container.
+- `agent_image` (String) URL of the Kubernetes Prodvana agent container image.
+- `agent_url` (String) URL of the Kubernetes Prodvana agent server
 - `id` (String) Runtime identifier
 
 ## Import

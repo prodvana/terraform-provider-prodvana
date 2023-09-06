@@ -86,10 +86,19 @@ resource "prodvana_release_channel" "example" {
 
 ### Optional
 
+- `labels` (Attributes List) List of labels to apply to the runtime (see [below for nested schema](#nestedatt--labels))
 - `timeout` (String) How long to wait for the runtime linking to complete. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
 
 ### Read-Only
 
 - `id` (String) Runtime identifier
+
+<a id="nestedatt--labels"></a>
+### Nested Schema for `labels`
+
+Required:
+
+- `label` (String) Label name
+- `value` (String) Label value
 
 

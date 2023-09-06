@@ -75,6 +75,7 @@ resource "prodvana_managed_k8s_runtime" "example" {
 - `exec` (Attributes) Exec configuration for authentication to the Kubernetes cluster (see [below for nested schema](#nestedatt--exec))
 - `host` (String) The address of the Kubernetes cluster (scheme://hostname:port)
 - `insecure` (Boolean) Whether server should be accessed without verifying the TLS certificate
+- `labels` (Attributes List) List of labels to apply to the runtime (see [below for nested schema](#nestedatt--labels))
 - `password` (String) Password for basic authentication to the Kubernetes cluster
 - `proxy_url` (String) Proxy URL to use when accessing the Kubernetes cluster
 - `timeout` (String) How long to wait for the runtime linking to complete. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
@@ -100,3 +101,12 @@ Optional:
 
 - `args` (List of String) Arguments to pass when executing the command
 - `env` (Map of String) Environment variables to set when executing the command
+
+
+<a id="nestedatt--labels"></a>
+### Nested Schema for `labels`
+
+Required:
+
+- `label` (String) Label name
+- `value` (String) Label value

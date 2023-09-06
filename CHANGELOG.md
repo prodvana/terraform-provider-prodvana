@@ -1,5 +1,8 @@
 ## 0.1.10 (Unreleased)
 
+FEATURES:
+  - Add runtime label support to `prodvana_managed_k8s_runtime` and `prodvana_runtime_link`
+
 ## 0.1.9
 
 FIXES:

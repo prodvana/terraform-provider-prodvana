@@ -19,9 +19,21 @@ Prodvana Kubernetes Runtime
 
 - `name` (String) Runtime name
 
+### Optional
+
+- `labels` (Attributes List) List of labels to apply to the runtime (see [below for nested schema](#nestedatt--labels))
+
 ### Read-Only
 
 - `agent_api_token` (String, Sensitive) API Token used for linking the Kubernetes Prodvana agent
 - `id` (String) Runtime identifier
+
+<a id="nestedatt--labels"></a>
+### Nested Schema for `labels`
+
+Required:
+
+- `label` (String) Label name
+- `value` (String) Label value
 
 

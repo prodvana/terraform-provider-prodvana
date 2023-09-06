@@ -9,6 +9,7 @@ import (
 	env_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/environment"
 	"github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/version"
 	"github.com/prodvana/terraform-provider-prodvana/internal/provider/defaults"
+	"github.com/prodvana/terraform-provider-prodvana/internal/provider/labels"
 	"github.com/prodvana/terraform-provider-prodvana/internal/provider/validators"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -62,6 +63,8 @@ type ManagedK8sRuntimeResourceModel struct {
 	Id   types.String `tfsdk:"id"`
 
 	AgentEnv types.Map `tfsdk:"agent_env"`
+
+	Labels types.List `tfsdk:"labels"`
 
 	// Matches the authentication options provided by terraform-provider-kubernetes
 	Host                  types.String `tfsdk:"host"`
@@ -282,6 +285,12 @@ The agent will be installed as a Kubernetes deployment in the specified namespac
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"labels": schema.ListNestedAttribute{
+				MarkdownDescription: "List of labels to apply to the runtime",
+				Computed:            true,
+				Optional:            true,
+				NestedObject:        labels.LabelDefinitionNestedObjectResourceSchema(),
+			},
 			"timeout": schema.StringAttribute{
 				MarkdownDescription: "How long to wait for the runtime linking to complete. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`",
 				Optional:            true,
@@ -487,7 +496,7 @@ func getDeploymentRuntimeId(ctx context.Context, clientSet *kubernetes.Clientset
 	return true, agentDeploy.Annotations[agentRuntimeIdAnnotation], nil
 }
 
-func readManagedK8sRuntimeData(ctx context.Context, client env_pb.EnvironmentManagerClient, clientSet *kubernetes.Clientset, data *ManagedK8sRuntimeResourceModel) error {
+func readManagedK8sRuntimeData(ctx context.Context, diags diag.Diagnostics, client env_pb.EnvironmentManagerClient, clientSet *kubernetes.Clientset, data *ManagedK8sRuntimeResourceModel) error {
 	resp, err := client.GetCluster(ctx, &env_pb.GetClusterReq{
 		Runtime:     data.Name.ValueString(),
 		IncludeAuth: true,
@@ -498,6 +507,20 @@ func readManagedK8sRuntimeData(ctx context.Context, client env_pb.EnvironmentMan
 
 	data.Name = types.StringValue(resp.Cluster.Name)
 	data.Id = types.StringValue(resp.Cluster.Id)
+	tfLabels := types.ListNull(labels.LabelDefinitionObjectType)
+	if data.Labels.IsUnknown() {
+		tfLabels = labels.LabelDefinitionsToTerraformList(ctx, resp.Cluster.Config.Labels, diags)
+		if diags.HasError() {
+			return errors.Errorf("Failed to convert labels: %v", diags.Errors())
+		}
+	} else if !data.Labels.IsNull() {
+		userProvidedLabels := labels.LabelDefinitionsFromTerraformList(ctx, data.Labels, diags)
+		if diags.HasError() {
+			return errors.Errorf("Failed to convert labels: %v", diags.Errors())
+		}
+		tfLabels = labels.LabelDefinitionsToTerraformListWithValidation(ctx, resp.Cluster.Config.Labels, userProvidedLabels, diags)
+	}
+	data.Labels = tfLabels
 
 	if resp.Cluster.Type != env_pb.ClusterType_K8S {
 		return errors.Errorf("Unexpected non-Kubernetes runtime type: %s. Did the runtime change outside Terraform?", resp.Cluster.Type.String())
@@ -515,8 +538,8 @@ func readManagedK8sRuntimeData(ctx context.Context, client env_pb.EnvironmentMan
 	return nil
 }
 
-func (r *ManagedK8sRuntimeResource) refresh(ctx context.Context, clientset *kubernetes.Clientset, data *ManagedK8sRuntimeResourceModel) error {
-	return readManagedK8sRuntimeData(ctx, r.client, clientset, data)
+func (r *ManagedK8sRuntimeResource) refresh(ctx context.Context, diags diag.Diagnostics, clientset *kubernetes.Clientset, data *ManagedK8sRuntimeResourceModel) error {
+	return readManagedK8sRuntimeData(ctx, diags, r.client, clientset, data)
 }
 
 func deleteKubernetesObjects(ctx context.Context, namespace string, clientSet *kubernetes.Clientset) error {
@@ -755,7 +778,28 @@ func (r *ManagedK8sRuntimeResource) createOrUpdate(ctx context.Context, diags di
 		return errors.Wrapf(err, "Runtime linking failed")
 	}
 
-	return r.refresh(ctx, clientSet, planData)
+	getResp, err := r.client.GetCluster(ctx, &env_pb.GetClusterReq{
+		Runtime: planData.Name.ValueString(),
+	})
+	if err != nil {
+		return err
+	}
+
+	config := getResp.Cluster.Config
+	labelProtos := labels.LabelDefinitionProtosFromTerraformList(ctx, planData.Labels, diags)
+	if diags.HasError() {
+		return errors.Errorf("Failed to convert labels: %v", diags.Errors())
+	}
+	config.Labels = labelProtos
+
+	_, err = r.client.ConfigureCluster(ctx, &env_pb.ConfigureClusterReq{
+		RuntimeName: planData.Name.ValueString(),
+		Config:      config,
+	})
+	if err != nil {
+		return err
+	}
+	return r.refresh(ctx, diags, clientSet, planData)
 }
 
 func (r *ManagedK8sRuntimeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -796,7 +840,7 @@ func (r *ManagedK8sRuntimeResource) Read(ctx context.Context, req resource.ReadR
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create client set, got error: %s", err))
 		return
 	}
-	err = r.refresh(ctx, clientSet, data)
+	err = r.refresh(ctx, resp.Diagnostics, clientSet, data)
 	if err != nil {
 		// if the runtime does not exist, remove the resource
 		if status.Code(err) == codes.NotFound {
