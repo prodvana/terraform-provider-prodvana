@@ -73,10 +73,10 @@ func TestAccReleaseChannelResourceWithContainerOrchestration(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccReleaseChannelResourceWithK8sNamespace(appName, "foo-namespace"),
+				Config: testAccReleaseChannelResourceWithK8sNamespace(appName, "test-namespace"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
-					resource.TestCheckResourceAttr("prodvana_release_channel.test", "runtimes.0.k8s_namespace", "foo-namespace"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "runtimes.0.k8s_namespace", "test-namespace"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase

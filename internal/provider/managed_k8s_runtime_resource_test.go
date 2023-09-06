@@ -23,20 +23,33 @@ func TestAccManagedK8sRuntimeResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "foo"),
+				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "foo", map[string]string{
+					"foo": "bar",
+					"baz": "qux",
+				}),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "name", runtimeName),
 					resource.TestCheckResourceAttrSet("prodvana_managed_k8s_runtime."+runtimeName, "id"),
 					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "agent_env.PROXY", "foo"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.label", "foo"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.value", "bar"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.1.label", "baz"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.1.value", "qux"),
 				),
 			},
 			// Update and Read testing
 			{
-				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "bar"),
+				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "bar", map[string]string{
+					"foo": "notbar",
+				}),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "name", runtimeName),
 					resource.TestCheckResourceAttrSet("prodvana_managed_k8s_runtime."+runtimeName, "id"),
 					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "agent_env.PROXY", "bar"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.label", "foo"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.value", "notbar"),
+					resource.TestCheckNoResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.1.label"),
+					resource.TestCheckNoResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.1.value"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -185,7 +198,7 @@ func TestAccManagedK8sRuntimeResourceK8sAuth(t *testing.T) {
 				),
 			},
 			{
-				Config:  testAccManagedK8sRuntimeResourceConfig(runtimeName, "foo"),
+				Config:  testAccManagedK8sRuntimeResourceConfig(runtimeName, "foo", nil),
 				Destroy: true,
 			},
 			// client cert + key
@@ -206,7 +219,16 @@ func TestAccManagedK8sRuntimeResourceK8sAuth(t *testing.T) {
 	})
 }
 
-func testAccManagedK8sRuntimeResourceConfig(name string, proxy string) string {
+func testAccManagedK8sRuntimeResourceConfig(name string, proxy string, labels map[string]string) string {
+	labelStr := ""
+	for k, v := range labels {
+		labelStr += fmt.Sprintf(`
+		{
+			label = %[1]q
+			value = %[2]q
+		},
+		`, k, v)
+	}
 	return fmt.Sprintf(`
 resource "prodvana_managed_k8s_runtime" "%[1]s" {
   name = %[1]q
@@ -217,8 +239,11 @@ resource "prodvana_managed_k8s_runtime" "%[1]s" {
   agent_env = {
 	"PROXY" = %[2]q 
   }
+ labels = [
+	%[3]s
+ ]
 }
-`, name, proxy)
+`, name, proxy, labelStr)
 }
 
 func testAccManagedK8sRuntimeResourceConfigPath(name string, configPath, context string) string {

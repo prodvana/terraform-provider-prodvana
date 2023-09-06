@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -40,6 +41,10 @@ type K8sRuntimeResourceModel struct {
 	Id   types.String `tfsdk:"id"`
 
 	AgentApiToken types.String `tfsdk:"agent_api_token"`
+
+	AgentURL   types.String `tfsdk:"agent_url"`
+	AgentImage types.String `tfsdk:"agent_image"`
+	AgentArgs  types.List   `tfsdk:"agent_args"`
 }
 
 func (r *K8sRuntimeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -71,6 +76,26 @@ func (r *K8sRuntimeResource) Schema(ctx context.Context, req resource.SchemaRequ
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"agent_url": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "URL of the Kubernetes Prodvana agent server",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"agent_image": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "URL of the Kubernetes Prodvana agent container image.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"agent_args": schema.ListAttribute{
+				Computed:            true,
+				Sensitive:           true,
+				MarkdownDescription: "Arguments to pass to the Kubernetes Prodvana agent container.",
+				ElementType:         types.StringType,
+			},
 		},
 	}
 }
@@ -95,40 +120,9 @@ func (r *K8sRuntimeResource) Configure(ctx context.Context, req resource.Configu
 	r.client = env_pb.NewEnvironmentManagerClient(conn)
 }
 
-func readK8sRuntimeData(ctx context.Context, client env_pb.EnvironmentManagerClient, data *K8sRuntimeResourceModel) error {
-	resp, err := client.GetCluster(ctx, &env_pb.GetClusterReq{
-		Runtime:     data.Name.ValueString(),
-		IncludeAuth: true,
-	})
-	if err != nil {
-		return errors.Wrapf(err, "Unable to read runtime state for %s", data.Name.ValueString())
-	}
-
-	data.Name = types.StringValue(resp.Cluster.Name)
-	data.Id = types.StringValue(resp.Cluster.Id)
-
-	if resp.Cluster.Type != env_pb.ClusterType_K8S {
-		return errors.Errorf("Unexpected non-Kubernetes runtime type: %s. Did the runtime change outside Terraform?", resp.Cluster.Type.String())
-	}
-
-	tokenResp, err := client.GetClusterAgentApiToken(ctx, &env_pb.GetClusterAgentApiTokenReq{
+func readK8sRuntimeData(ctx context.Context, diags diag.Diagnostics, client env_pb.EnvironmentManagerClient, data *K8sRuntimeResourceModel) error {
+	linkResp, err := client.LinkCluster(ctx, &env_pb.LinkClusterReq{
 		Name: data.Name.ValueString(),
-	})
-	if err != nil {
-		return errors.Wrapf(err, "Unable to read runtime state for %s", data.Name.ValueString())
-	}
-	data.AgentApiToken = types.StringValue(tokenResp.ApiToken)
-
-	return nil
-}
-
-func (r *K8sRuntimeResource) refresh(ctx context.Context, data *K8sRuntimeResourceModel) error {
-	return readK8sRuntimeData(ctx, r.client, data)
-}
-
-func (r *K8sRuntimeResource) createOrUpdate(ctx context.Context, planData *K8sRuntimeResourceModel) error {
-	_, err := r.client.LinkCluster(ctx, &env_pb.LinkClusterReq{
-		Name: planData.Name.ValueString(),
 		Type: env_pb.ClusterType_K8S,
 		Auth: &env_pb.ClusterAuth{
 			K8SAgentAuth: true,
@@ -143,8 +137,50 @@ func (r *K8sRuntimeResource) createOrUpdate(ctx context.Context, planData *K8sRu
 	if err != nil {
 		return err
 	}
+	data.Id = types.StringValue(linkResp.ClusterId)
+	data.AgentApiToken = types.StringValue(linkResp.K8SAgentApiToken)
+	data.AgentURL = types.StringValue(linkResp.K8SAgentUrl)
+	data.AgentImage = types.StringValue(linkResp.K8SAgentImage)
+	args, valDiags := types.ListValueFrom(ctx, types.StringType, linkResp.K8SAgentArgs)
+	if valDiags.HasError() {
+		return errors.Errorf("Failed to convert agent args: %v", valDiags.Errors())
+	}
+	data.AgentArgs = args
 
-	return r.refresh(ctx, planData)
+	return nil
+}
+
+func (r *K8sRuntimeResource) refresh(ctx context.Context, diags diag.Diagnostics, data *K8sRuntimeResourceModel) error {
+	return readK8sRuntimeData(ctx, diags, r.client, data)
+}
+
+func (r *K8sRuntimeResource) createOrUpdate(ctx context.Context, diags diag.Diagnostics, planData *K8sRuntimeResourceModel) error {
+	// linkResp, err := r.client.LinkCluster(ctx, &env_pb.LinkClusterReq{
+	// 	Name: planData.Name.ValueString(),
+	// 	Type: env_pb.ClusterType_K8S,
+	// 	Auth: &env_pb.ClusterAuth{
+	// 		K8SAgentAuth: true,
+	// 		AuthOneof: &env_pb.ClusterAuth_K8S{
+	// 			K8S: &env_pb.ClusterAuth_K8SAuth{
+	// 				AgentExternallyManaged: true,
+	// 			},
+	// 		},
+	// 	},
+	// 	Source: version.Source_IAC,
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+	// planData.AgentApiToken = types.StringValue(linkResp.K8SAgentApiToken)
+	// planData.AgentURL = types.StringValue(linkResp.K8SAgentUrl)
+	// planData.AgentImage = types.StringValue(linkResp.K8SAgentImage)
+	// args, valDiags := types.ListValueFrom(ctx, types.StringType, linkResp.K8SAgentArgs)
+	// if valDiags.HasError() {
+	// 	return errors.Errorf("Failed to convert agent args: %v", valDiags.Errors())
+	// }
+	// planData.AgentArgs = args
+
+	return r.refresh(ctx, diags, planData)
 }
 
 func (r *K8sRuntimeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -157,7 +193,7 @@ func (r *K8sRuntimeResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	err := r.createOrUpdate(ctx, data)
+	err := r.createOrUpdate(ctx, resp.Diagnostics, data)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create runtime, got error: %s", err))
 		return
@@ -179,7 +215,7 @@ func (r *K8sRuntimeResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	err := r.refresh(ctx, data)
+	err := r.refresh(ctx, resp.Diagnostics, data)
 	if err != nil {
 		// if the runtime does not exist, remove the resource
 		if status.Code(err) == codes.NotFound {
@@ -206,7 +242,7 @@ func (r *K8sRuntimeResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	err := r.createOrUpdate(ctx, planData)
+	err := r.createOrUpdate(ctx, resp.Diagnostics, planData)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update runtime, got error: %s", err))
 		return
@@ -246,7 +282,7 @@ func (r *K8sRuntimeResource) ImportState(ctx context.Context, req resource.Impor
 	}
 
 	data.Name = types.StringValue(req.ID)
-	err := r.refresh(ctx, &data)
+	err := r.refresh(ctx, resp.Diagnostics, &data)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to import runtime state for %s, got error: %s", data.Name.ValueString(), err))
 		return
