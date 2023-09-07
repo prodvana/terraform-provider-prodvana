@@ -4,7 +4,9 @@
 
 FIXES:
   - To match API behavior, `prodvana_release_channel` `manual_approval_preconditions.name` is now optional
-  - To match API behavior, `prodvana_release_channel` `release_channel_stable_preconditions.duration` is now optional
+
+CHANGES:
+  - `prodvana_release_channel.release_channel_stable_preconditions.duration` has been removed
 
 ## 0.1.10
 

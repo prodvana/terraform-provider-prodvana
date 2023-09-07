@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	common_config_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/common_config"
@@ -17,7 +16,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
@@ -73,7 +71,6 @@ type constant struct {
 
 type releaseChannelStable struct {
 	ReleaseChannel types.String `tfsdk:"release_channel"`
-	Duration       types.String `tfsdk:"duration"`
 }
 
 type manualApproval struct {
@@ -367,11 +364,6 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 							Required:            true,
 							Validators:          validators.DefaultNameValidators(),
 						},
-						"duration": schema.StringAttribute{
-							MarkdownDescription: "duration to wait for the release channel to be stable. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`",
-							Optional:            true,
-							Computed:            true,
-						},
 					},
 				},
 			},
@@ -534,16 +526,9 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 		for _, rc := range config.Preconditions {
 			switch rc.Precondition.(type) {
 			case *rc_pb.Precondition_ReleaseChannelStable_:
-				durationValue := types.StringNull()
-				if rc.GetReleaseChannelStable().Duration != nil {
-					duration := rc.GetReleaseChannelStable().Duration.AsDuration()
-					durationValue = types.StringValue(duration.String())
-				}
 				precon := &releaseChannelStable{
 					ReleaseChannel: types.StringValue(rc.GetReleaseChannelStable().ReleaseChannel),
-					Duration:       durationValue,
 				}
-
 				rcStable = append(rcStable, precon)
 			case *rc_pb.Precondition_ManualApproval_:
 				precon := &manualApproval{
@@ -682,20 +667,11 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 	preconditions := []*rc_pb.Precondition{}
 	if planData.ReleaseChannelStablePreconditions != nil {
 		for _, rc := range planData.ReleaseChannelStablePreconditions {
-			var duration *durationpb.Duration
-			if !rc.Duration.IsNull() && rc.Duration.ValueString() != "" {
-				dur, err := time.ParseDuration(rc.Duration.ValueString())
-				if err != nil {
-					return err
-				}
-				duration = durationpb.New(dur)
-			}
 
 			preconditions = append(preconditions, &rc_pb.Precondition{
 				Precondition: &rc_pb.Precondition_ReleaseChannelStable_{
 					ReleaseChannelStable: &rc_pb.Precondition_ReleaseChannelStable{
 						ReleaseChannel: rc.ReleaseChannel.ValueString(),
-						Duration:       duration,
 					},
 				},
 			})
