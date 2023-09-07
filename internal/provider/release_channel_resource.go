@@ -369,7 +369,8 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 						},
 						"duration": schema.StringAttribute{
 							MarkdownDescription: "duration to wait for the release channel to be stable. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`",
-							Required:            true,
+							Optional:            true,
+							Computed:            true,
 						},
 					},
 				},
@@ -381,7 +382,9 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
 							MarkdownDescription: "name of the manual approval",
-							Required:            true,
+							Optional:            true,
+							Computed:            true,
+							Default:             stringdefault.StaticString(""),
 							Validators:          validators.DefaultNameValidators(),
 						},
 						"description": schema.StringAttribute{
@@ -531,10 +534,14 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 		for _, rc := range config.Preconditions {
 			switch rc.Precondition.(type) {
 			case *rc_pb.Precondition_ReleaseChannelStable_:
-				duration := rc.GetReleaseChannelStable().Duration.AsDuration()
+				durationValue := types.StringNull()
+				if rc.GetReleaseChannelStable().Duration != nil {
+					duration := rc.GetReleaseChannelStable().Duration.AsDuration()
+					durationValue = types.StringValue(duration.String())
+				}
 				precon := &releaseChannelStable{
 					ReleaseChannel: types.StringValue(rc.GetReleaseChannelStable().ReleaseChannel),
-					Duration:       types.StringValue(duration.String()),
+					Duration:       durationValue,
 				}
 
 				rcStable = append(rcStable, precon)
@@ -675,16 +682,20 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 	preconditions := []*rc_pb.Precondition{}
 	if planData.ReleaseChannelStablePreconditions != nil {
 		for _, rc := range planData.ReleaseChannelStablePreconditions {
-			dur, err := time.ParseDuration(rc.Duration.ValueString())
-			if err != nil {
-				return err
+			var duration *durationpb.Duration
+			if !rc.Duration.IsNull() && rc.Duration.ValueString() != "" {
+				dur, err := time.ParseDuration(rc.Duration.ValueString())
+				if err != nil {
+					return err
+				}
+				duration = durationpb.New(dur)
 			}
 
 			preconditions = append(preconditions, &rc_pb.Precondition{
 				Precondition: &rc_pb.Precondition_ReleaseChannelStable_{
 					ReleaseChannelStable: &rc_pb.Precondition_ReleaseChannelStable{
 						ReleaseChannel: rc.ReleaseChannel.ValueString(),
-						Duration:       durationpb.New(dur),
+						Duration:       duration,
 					},
 				},
 			})

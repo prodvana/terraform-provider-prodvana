@@ -130,6 +130,8 @@ func TestAccReleaseChannelResourceWithStablePrecondition(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
 
+					resource.TestCheckResourceAttr("prodvana_release_channel.pre2", "manual_approval_preconditions.0.name", ""),
+
 					resource.TestCheckResourceAttr("prodvana_release_channel.test", "release_channel_stable_preconditions.0.release_channel", "pre"),
 					resource.TestCheckResourceAttr("prodvana_release_channel.test", "release_channel_stable_preconditions.1.release_channel", "pre2"),
 
@@ -149,6 +151,8 @@ func TestAccReleaseChannelResourceWithStablePrecondition(t *testing.T) {
 				Config: testAccReleaseChannelResourceWithPreconditions(appName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("prodvana_release_channel.test", "name", "test"),
+
+					resource.TestCheckResourceAttr("prodvana_release_channel.pre2", "manual_approval_preconditions.0.name", ""),
 
 					resource.TestCheckResourceAttr("prodvana_release_channel.test", "release_channel_stable_preconditions.0.release_channel", "pre"),
 					resource.TestCheckResourceAttr("prodvana_release_channel.test", "release_channel_stable_preconditions.1.release_channel", "pre2"),
@@ -376,6 +380,7 @@ resource "prodvana_release_channel" "pre2" {
 		runtime = "default"
 	},
   ]
+  manual_approval_preconditions = [{}]
 }
 
 resource "prodvana_release_channel" "test" {
@@ -389,11 +394,9 @@ resource "prodvana_release_channel" "test" {
   release_channel_stable_preconditions = [
 	{
 		  release_channel = prodvana_release_channel.pre.name
-		  duration = "2s"
 	},
 	{
 		  release_channel = prodvana_release_channel.pre2.name
-		  duration = "2s"
 	},
   ]
   manual_approval_preconditions = [
