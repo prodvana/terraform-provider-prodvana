@@ -1,4 +1,12 @@
-## 0.1.11 (Unreleased)
+## 0.1.12 (Unreleased)
+
+## 0.1.11
+
+FIXES:
+  - To match API behavior, `prodvana_release_channel` `manual_approval_preconditions.name` is now optional
+
+CHANGES:
+  - `prodvana_release_channel.release_channel_stable_preconditions.duration` has been removed
 
 ## 0.1.10
 

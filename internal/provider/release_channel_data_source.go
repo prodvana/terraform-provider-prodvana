@@ -242,10 +242,6 @@ func (d *ReleaseChannelDataSource) Schema(ctx context.Context, req datasource.Sc
 							Required:            true,
 							Validators:          validators.DefaultNameValidators(),
 						},
-						"duration": schema.StringAttribute{
-							MarkdownDescription: "duration to wait for the release channel to be stable. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`",
-							Required:            true,
-						},
 					},
 				},
 			},
