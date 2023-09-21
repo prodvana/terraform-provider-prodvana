@@ -15,6 +15,16 @@ This resource allows you to manage a Prodvana Kubernetes [Runtime](https://docs.
 ```terraform
 resource "prodvana_k8s_runtime" "example" {
   name = "my-k8s-runtime"
+  labels = [
+    {
+      label = "env"
+      value = "staging"
+    },
+    {
+      label = "region"
+      value = "us-central1"
+    },
+  ]
 }
 ```
 
@@ -25,6 +35,10 @@ resource "prodvana_k8s_runtime" "example" {
 
 - `name` (String) Runtime name
 
+### Optional
+
+- `labels` (Attributes List) List of labels to apply to the runtime (see [below for nested schema](#nestedatt--labels))
+
 ### Read-Only
 
 - `agent_api_token` (String, Sensitive) API Token used for linking the Kubernetes Prodvana agent
@@ -32,6 +46,14 @@ resource "prodvana_k8s_runtime" "example" {
 - `agent_image` (String) URL of the Kubernetes Prodvana agent container image.
 - `agent_url` (String) URL of the Kubernetes Prodvana agent server
 - `id` (String) Runtime identifier
+
+<a id="nestedatt--labels"></a>
+### Nested Schema for `labels`
+
+Required:
+
+- `label` (String) Label name
+- `value` (String) Label value
 
 ## Import
 

@@ -8,30 +8,65 @@ resource "prodvana_k8s_runtime" "example" {
 # deploy the Prodvana agent to the Kubernetes cluster
 # NOTE: this is an example and may not be complete, see
 # https://docs.prodvana.io for the latest agent configuration details
-resource "kubernetes_deployment_v1" "agent" {
+resource "kubernetes_namespace" "prodvana" {
   metadata {
-    name      = "agent"
-    namespace = "prodvana"
+    name = "prodvana"
+  }
+}
+
+resource "kubernetes_service_account" "prodvana" {
+  metadata {
+    name      = "prodvana"
+    namespace = kubernetes_namespace.prodvana.metadata[0].name
+  }
+}
+
+resource "kubernetes_cluster_role_binding" "prodvana" {
+  metadata {
+    name = "prodvana-access"
+  }
+
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "ClusterRole"
+    name      = "cluster-admin"
+  }
+
+  subject {
+    kind      = "ServiceAccount"
+    name      = "prodvana"
+    namespace = kubernetes_namespace.prodvana.metadata[0].name
+  }
+}
+
+resource "kubernetes_deployment" "agent" {
+  metadata {
+    name      = "prodvana-agent"
+    namespace = kubernetes_namespace.prodvana.metadata[0].name
   }
 
   spec {
     replicas = 1
+
+    selector {
+      match_labels = {
+        app = "prodvana-agent"
+      }
+    }
+
     template {
+      metadata {
+        labels = {
+          app = "prodvana-agent"
+        }
+      }
+
       spec {
+        service_account_name = kubernetes_service_account.prodvana.metadata[0].name
         container {
-          name  = "prodvana-agent"
-          image = "prodvana/agent:v0.1.0"
-
-          args = [
-            "/agent",
-            "--clusterid",
-            prodvana_k8s_runtime.example.id,
-            "--auth",
-            prodvana_k8_runtime.agent_api_token,
-            "--server-addr",
-            "api.<org_slug>.prodvana.io",
-          ]
-
+          name  = "agent"
+          image = resource.prodvana_k8s_runtime.cluster.agent_image
+          args  = resource.prodvana_k8s_runtime.cluster.agent_args
         }
       }
     }

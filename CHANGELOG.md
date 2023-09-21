@@ -1,4 +1,12 @@
-## 0.1.12 (Unreleased)
+## 0.1.13 (Unreleased)
+
+## 0.1.12
+
+FEATURES:
+  - Add runtime label support to `prodvana_k8s_runtime`
+
+CHANGES:
+  - Removed runtime label attribute from `prodvana_runtime_link` (labels should be set on `prodvana_k8s_runtime` or `prodvana_managed_k8s_runtime` instead)
 
 ## 0.1.11
 
