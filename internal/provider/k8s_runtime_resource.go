@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	env_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/environment"
 	"github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/version"
+	"github.com/prodvana/terraform-provider-prodvana/internal/provider/labels"
 	"github.com/prodvana/terraform-provider-prodvana/internal/provider/validators"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -40,11 +41,12 @@ type K8sRuntimeResourceModel struct {
 	Name types.String `tfsdk:"name"`
 	Id   types.String `tfsdk:"id"`
 
-	AgentApiToken types.String `tfsdk:"agent_api_token"`
+	Labels types.List `tfsdk:"labels"`
 
-	AgentURL   types.String `tfsdk:"agent_url"`
-	AgentImage types.String `tfsdk:"agent_image"`
-	AgentArgs  types.List   `tfsdk:"agent_args"`
+	AgentApiToken types.String `tfsdk:"agent_api_token"`
+	AgentURL      types.String `tfsdk:"agent_url"`
+	AgentImage    types.String `tfsdk:"agent_image"`
+	AgentArgs     types.List   `tfsdk:"agent_args"`
 }
 
 func (r *K8sRuntimeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -67,6 +69,12 @@ func (r *K8sRuntimeResource) Schema(ctx context.Context, req resource.SchemaRequ
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+			},
+			"labels": schema.ListNestedAttribute{
+				MarkdownDescription: "List of labels to apply to the runtime",
+				Computed:            true,
+				Optional:            true,
+				NestedObject:        labels.LabelDefinitionNestedObjectResourceSchema(),
 			},
 			"agent_api_token": schema.StringAttribute{
 				Computed:            true,
@@ -125,7 +133,6 @@ func readK8sRuntimeData(ctx context.Context, diags diag.Diagnostics, client env_
 		Name: data.Name.ValueString(),
 		Type: env_pb.ClusterType_K8S,
 		Auth: &env_pb.ClusterAuth{
-			K8SAgentAuth: true,
 			AuthOneof: &env_pb.ClusterAuth_K8S{
 				K8S: &env_pb.ClusterAuth_K8SAuth{
 					AgentExternallyManaged: true,
@@ -147,6 +154,34 @@ func readK8sRuntimeData(ctx context.Context, diags diag.Diagnostics, client env_
 	}
 	data.AgentArgs = args
 
+	getResp, err := client.GetCluster(ctx, &env_pb.GetClusterReq{
+		Runtime:     data.Name.ValueString(),
+		IncludeAuth: true,
+	})
+	if err != nil {
+		return errors.Wrapf(err, "Unable to read runtime state for %s", data.Name.ValueString())
+	}
+
+	if getResp.Cluster.Type != env_pb.ClusterType_K8S {
+		return errors.Errorf("Unexpected non-Kubernetes runtime type: %s. Did the runtime change outside Terraform?", getResp.Cluster.Type.String())
+	}
+
+	data.Name = types.StringValue(getResp.Cluster.Name)
+	data.Id = types.StringValue(getResp.Cluster.Id)
+	tfLabels := types.ListNull(labels.LabelDefinitionObjectType)
+	if data.Labels.IsUnknown() || data.Labels.IsNull() {
+		tfLabels = labels.LabelDefinitionsToTerraformList(ctx, getResp.Cluster.Config.Labels, diags)
+		if diags.HasError() {
+			return errors.Errorf("Failed to convert labels: %v", diags.Errors())
+		}
+	} else if !data.Labels.IsNull() {
+		userProvidedLabels := labels.LabelDefinitionsFromTerraformList(ctx, data.Labels, diags)
+		if diags.HasError() {
+			return errors.Errorf("Failed to convert labels: %v", diags.Errors())
+		}
+		tfLabels = labels.LabelDefinitionsToTerraformListWithValidation(ctx, getResp.Cluster.Config.Labels, userProvidedLabels, diags)
+	}
+	data.Labels = tfLabels
 	return nil
 }
 
@@ -155,31 +190,51 @@ func (r *K8sRuntimeResource) refresh(ctx context.Context, diags diag.Diagnostics
 }
 
 func (r *K8sRuntimeResource) createOrUpdate(ctx context.Context, diags diag.Diagnostics, planData *K8sRuntimeResourceModel) error {
-	// linkResp, err := r.client.LinkCluster(ctx, &env_pb.LinkClusterReq{
-	// 	Name: planData.Name.ValueString(),
-	// 	Type: env_pb.ClusterType_K8S,
-	// 	Auth: &env_pb.ClusterAuth{
-	// 		K8SAgentAuth: true,
-	// 		AuthOneof: &env_pb.ClusterAuth_K8S{
-	// 			K8S: &env_pb.ClusterAuth_K8SAuth{
-	// 				AgentExternallyManaged: true,
-	// 			},
-	// 		},
-	// 	},
-	// 	Source: version.Source_IAC,
-	// })
-	// if err != nil {
-	// 	return err
-	// }
-	// planData.AgentApiToken = types.StringValue(linkResp.K8SAgentApiToken)
-	// planData.AgentURL = types.StringValue(linkResp.K8SAgentUrl)
-	// planData.AgentImage = types.StringValue(linkResp.K8SAgentImage)
-	// args, valDiags := types.ListValueFrom(ctx, types.StringType, linkResp.K8SAgentArgs)
-	// if valDiags.HasError() {
-	// 	return errors.Errorf("Failed to convert agent args: %v", valDiags.Errors())
-	// }
-	// planData.AgentArgs = args
+	linkResp, err := r.client.LinkCluster(ctx, &env_pb.LinkClusterReq{
+		Name: planData.Name.ValueString(),
+		Type: env_pb.ClusterType_K8S,
+		Auth: &env_pb.ClusterAuth{
+			AuthOneof: &env_pb.ClusterAuth_K8S{
+				K8S: &env_pb.ClusterAuth_K8SAuth{
+					AgentExternallyManaged: true,
+				},
+			},
+		},
+		Source: version.Source_IAC,
+	})
+	if err != nil {
+		return err
+	}
+	planData.Id = types.StringValue(linkResp.ClusterId)
+	planData.AgentApiToken = types.StringValue(linkResp.K8SAgentApiToken)
+	planData.AgentURL = types.StringValue(linkResp.K8SAgentUrl)
+	planData.AgentImage = types.StringValue(linkResp.K8SAgentImage)
+	args, valDiags := types.ListValueFrom(ctx, types.StringType, linkResp.K8SAgentArgs)
+	if valDiags.HasError() {
+		return errors.Errorf("Failed to convert agent args: %v", valDiags.Errors())
+	}
+	planData.AgentArgs = args
+	getResp, err := r.client.GetCluster(ctx, &env_pb.GetClusterReq{
+		Runtime: planData.Name.ValueString(),
+	})
+	if err != nil {
+		return err
+	}
 
+	config := getResp.Cluster.Config
+	labelProtos := labels.LabelDefinitionProtosFromTerraformList(ctx, planData.Labels, diags)
+	if diags.HasError() {
+		return errors.Errorf("Failed to convert labels: %v", diags.Errors())
+	}
+	config.Labels = labelProtos
+
+	_, err = r.client.ConfigureCluster(ctx, &env_pb.ConfigureClusterReq{
+		RuntimeName: planData.Name.ValueString(),
+		Config:      config,
+	})
+	if err != nil {
+		return err
+	}
 	return r.refresh(ctx, diags, planData)
 }
 

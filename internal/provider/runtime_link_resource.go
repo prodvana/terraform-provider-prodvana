@@ -6,7 +6,6 @@ import (
 
 	"github.com/pkg/errors"
 	env_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/environment"
-	"github.com/prodvana/terraform-provider-prodvana/internal/provider/labels"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -38,8 +37,6 @@ type RuntimeLinkResourceModel struct {
 	Name    types.String `tfsdk:"name"`
 	Id      types.String `tfsdk:"id"`
 	Timeout types.String `tfsdk:"timeout"`
-
-	Labels types.List `tfsdk:"labels"`
 }
 
 func (r *RuntimeLinkResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -70,12 +67,6 @@ Pair this with an explicit ` + "`depends_on`" + ` block ensures that the runtime
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("10m"),
-			},
-			"labels": schema.ListNestedAttribute{
-				MarkdownDescription: "List of labels to apply to the runtime",
-				Computed:            true,
-				Optional:            true,
-				NestedObject:        labels.LabelDefinitionNestedObjectResourceSchema(),
 			},
 		},
 	}
@@ -110,51 +101,8 @@ func (r *RuntimeLinkResource) refresh(ctx context.Context, diags diag.Diagnostic
 	}
 
 	data.Id = types.StringValue(resp.Cluster.Id)
-	data.Labels = labels.LabelDefinitionsToTerraformList(ctx, resp.Cluster.Config.Labels, diags)
 
 	return resp.Cluster.Type == env_pb.ClusterType_K8S, nil
-}
-
-func (r *RuntimeLinkResource) update(ctx context.Context, diags diag.Diagnostics, getResp *env_pb.GetClusterResp, data *RuntimeLinkResourceModel) error {
-	config := getResp.Cluster.Config
-	if !data.Labels.IsUnknown() && !data.Labels.IsNull() {
-		labelProtos := labels.LabelDefinitionProtosFromTerraformList(ctx, data.Labels, diags)
-		if diags.HasError() {
-			return errors.Errorf("Failed to convert labels: %v", diags.Errors())
-		}
-		config.Labels = labelProtos
-	}
-
-	_, err := r.client.ConfigureCluster(ctx, &env_pb.ConfigureClusterReq{
-		RuntimeName: data.Name.ValueString(),
-		Config:      config,
-	})
-	if err != nil {
-		return err
-	}
-
-	getResp, err = r.client.GetCluster(ctx, &env_pb.GetClusterReq{
-		Runtime: data.Name.ValueString(),
-	})
-	if err != nil {
-		return err
-	}
-	tfLabels := types.ListNull(labels.LabelDefinitionObjectType)
-	if data.Labels.IsUnknown() {
-		tfLabels = labels.LabelDefinitionsToTerraformList(ctx, getResp.Cluster.Config.Labels, diags)
-		if diags.HasError() {
-			return errors.Errorf("Failed to convert labels: %v", diags.Errors())
-		}
-	} else if !data.Labels.IsNull() {
-		userProvidedLabels := labels.LabelDefinitionsFromTerraformList(ctx, data.Labels, diags)
-		if diags.HasError() {
-			return errors.Errorf("Failed to convert labels: %v", diags.Errors())
-		}
-		tfLabels = labels.LabelDefinitionsToTerraformListWithValidation(ctx, getResp.Cluster.Config.Labels, userProvidedLabels, diags)
-	}
-	data.Labels = tfLabels
-	return nil
-
 }
 
 func (r *RuntimeLinkResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -184,11 +132,6 @@ func (r *RuntimeLinkResource) Create(ctx context.Context, req resource.CreateReq
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Failed waiting for runtime linking: %s", err))
 			return
 		}
-	}
-
-	err = r.update(ctx, resp.Diagnostics, getResp, data)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update runtime, got error: %s", err))
 	}
 
 	tflog.Trace(ctx, "created runtime link resource")
@@ -240,7 +183,7 @@ func (r *RuntimeLinkResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	getResp, err := r.client.GetCluster(ctx, &env_pb.GetClusterReq{
+	_, err := r.client.GetCluster(ctx, &env_pb.GetClusterReq{
 		Runtime: planData.Name.ValueString(),
 	})
 	if err != nil {
@@ -250,12 +193,6 @@ func (r *RuntimeLinkResource) Update(ctx context.Context, req resource.UpdateReq
 			return
 		}
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update runtime link status, got error: %s", err))
-		return
-	}
-
-	err = r.update(ctx, resp.Diagnostics, getResp, planData)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update runtime, got error: %s", err))
 		return
 	}
 

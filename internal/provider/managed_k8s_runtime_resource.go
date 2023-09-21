@@ -508,7 +508,7 @@ func readManagedK8sRuntimeData(ctx context.Context, diags diag.Diagnostics, clie
 	data.Name = types.StringValue(resp.Cluster.Name)
 	data.Id = types.StringValue(resp.Cluster.Id)
 	tfLabels := types.ListNull(labels.LabelDefinitionObjectType)
-	if data.Labels.IsUnknown() {
+	if data.Labels.IsUnknown() || data.Labels.IsNull() {
 		tfLabels = labels.LabelDefinitionsToTerraformList(ctx, resp.Cluster.Config.Labels, diags)
 		if diags.HasError() {
 			return errors.Errorf("Failed to convert labels: %v", diags.Errors())
@@ -601,7 +601,6 @@ func (r *ManagedK8sRuntimeResource) createOrUpdate(ctx context.Context, diags di
 
 	req.Type = env_pb.ClusterType_K8S
 	req.Auth = &env_pb.ClusterAuth{
-		K8SAgentAuth: true,
 		AuthOneof: &env_pb.ClusterAuth_K8S{
 			K8S: &env_pb.ClusterAuth_K8SAuth{
 				AgentExternallyManaged: true,

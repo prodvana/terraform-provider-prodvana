@@ -268,7 +268,6 @@ Optional:
 
 Required:
 
-- `duration` (String) duration to wait for the release channel to be stable. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
 - `release_channel` (String) name of a release channel that must be in a stable deployment state
 
 

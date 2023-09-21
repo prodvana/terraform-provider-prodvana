@@ -184,14 +184,11 @@ Optional:
 <a id="nestedatt--manual_approval_preconditions"></a>
 ### Nested Schema for `manual_approval_preconditions`
 
-Required:
-
-- `name` (String) name of the manual approval
-
 Optional:
 
 - `description` (String) description of the manual approval
 - `every_action` (Boolean) whether this approval is required for every convergence action, or just the first. This only works for runtime extensions and Terraform runners. Setting this field to true will not result in any approvals being requested for Kubernetes services.
+- `name` (String) name of the manual approval
 
 
 <a id="nestedatt--policy"></a>
@@ -311,7 +308,6 @@ Optional:
 
 Required:
 
-- `duration` (String) duration to wait for the release channel to be stable. A valid Go duration string, e.g. `10m` or `1h`. Defaults to `10m`
 - `release_channel` (String) name of a release channel that must be in a stable deployment state
 
 

@@ -93,10 +93,10 @@ func TestAccRuntimeLinkResourceFullFlow(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("prodvana_runtime_link.test", "id"),
 					resource.TestCheckResourceAttr("prodvana_runtime_link.test", "timeout", "10m"),
-					resource.TestCheckResourceAttr("prodvana_runtime_link.test", "labels.0.label", "foo"),
-					resource.TestCheckResourceAttr("prodvana_runtime_link.test", "labels.0.value", "bar"),
-					resource.TestCheckResourceAttr("prodvana_runtime_link.test", "labels.1.label", "baz"),
-					resource.TestCheckResourceAttr("prodvana_runtime_link.test", "labels.1.value", "qux"),
+					resource.TestCheckResourceAttr("prodvana_k8s_runtime.test", "labels.0.label", "foo"),
+					resource.TestCheckResourceAttr("prodvana_k8s_runtime.test", "labels.0.value", "bar"),
+					resource.TestCheckResourceAttr("prodvana_k8s_runtime.test", "labels.1.label", "baz"),
+					resource.TestCheckResourceAttr("prodvana_k8s_runtime.test", "labels.1.value", "qux"),
 				),
 			},
 			// Update and Read test
@@ -110,10 +110,10 @@ func TestAccRuntimeLinkResourceFullFlow(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("prodvana_runtime_link.test", "id"),
 					resource.TestCheckResourceAttr("prodvana_runtime_link.test", "timeout", "10m"),
-					resource.TestCheckResourceAttr("prodvana_runtime_link.test", "labels.0.label", "foo"),
-					resource.TestCheckResourceAttr("prodvana_runtime_link.test", "labels.0.value", "notbar"),
-					resource.TestCheckNoResourceAttr("prodvana_runtime_link.test", "labels.1.label"),
-					resource.TestCheckNoResourceAttr("prodvana_runtime_link.test", "labels.1.value"),
+					resource.TestCheckResourceAttr("prodvana_k8s_runtime.test", "labels.0.label", "foo"),
+					resource.TestCheckResourceAttr("prodvana_k8s_runtime.test", "labels.0.value", "notbar"),
+					resource.TestCheckNoResourceAttr("prodvana_k8s_runtime.test", "labels.1.label"),
+					resource.TestCheckNoResourceAttr("prodvana_k8s_runtime.test", "labels.1.value"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -161,6 +161,9 @@ provider "kubernetes" {
 	}
 resource "prodvana_k8s_runtime" "test" {
   name = %[1]q
+  labels = [
+	%[2]s
+  ]
 }
 resource "kubernetes_namespace_v1" "agent" {
   metadata {
@@ -190,18 +193,8 @@ resource "kubernetes_deployment_v1" "agent" {
       spec {
         container {
           name  = "prodvana-agent"
-          // image = "us-docker.pkg.dev/pvn-infra/pvn-public/agent:4b2b408950898f23ab1082e93d2afa890261a898"
 		  image = prodvana_k8s_runtime.test.agent_image
 		  args = prodvana_k8s_runtime.test.agent_args
-          // args = [
-          //   "/agent",
-          //   "--clusterid",
-          //   prodvana_k8s_runtime.test.id,
-          //   "--auth",
-          //   prodvana_k8s_runtime.test.agent_api_token,
-          //   "--server-addr",
-          //   "api.prodvana-cont-testing-staging.staging.prodvana.io",
-          // ]
         }
       }
     }
@@ -210,9 +203,6 @@ resource "kubernetes_deployment_v1" "agent" {
 
 resource "prodvana_runtime_link" "test" {
   name = prodvana_k8s_runtime.test.name
-  labels = [
-	%[2]s
-  ]
   depends_on = [
 	kubernetes_deployment_v1.agent,
   ]
