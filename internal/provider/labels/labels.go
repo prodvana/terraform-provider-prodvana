@@ -131,22 +131,25 @@ func LabelDefinitionNestedObjectResourceSchema() schema.NestedAttributeObject {
 				Required:            true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
-					stringvalidator.RegexMatches(
-						regexp.MustCompile(`^[a-zA-Z0-9.\\-_@+]*$`),
-						"must contain only alphanumeric characters, @, -, _, \\, and start with a letter.",
-					),
+					labelValueValidator(),
 				},
 			},
 			"value": schema.StringAttribute{
 				MarkdownDescription: "Label value",
 				Required:            true,
 				Validators: []validator.String{
-					stringvalidator.RegexMatches(
-						regexp.MustCompile(`^[a-zA-Z0-9.\\-_@+]*$`),
-						"must contain only alphanumeric characters, @, -, _, \\, and start with a letter.",
-					),
+					labelValueValidator(),
 				},
 			},
 		},
 	}
+}
+
+var labelValueRegex = regexp.MustCompile(`^[a-zA-Z0-9.\\\-_@+]*$`)
+
+func labelValueValidator() validator.String {
+	return stringvalidator.RegexMatches(
+		labelValueRegex,
+		"must contain only alphanumeric characters, @, -, _, \\, and start with a letter.",
+	)
 }

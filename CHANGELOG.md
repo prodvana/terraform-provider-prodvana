@@ -1,4 +1,9 @@
-## 0.1.13 (Unreleased)
+## 0.1.14 (unreleased)
+
+## 0.1.13
+
+FIXES:
+- Fixed label validations to support the `-` character.
 
 ## 0.1.12
 

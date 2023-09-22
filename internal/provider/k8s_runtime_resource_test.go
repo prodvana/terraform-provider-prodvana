@@ -58,7 +58,7 @@ func TestAccK8sRuntimeResourceLabels(t *testing.T) {
 					},
 					{
 						Label: "baz",
-						Value: "qux",
+						Value: "qux@",
 					},
 				}),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -68,7 +68,7 @@ func TestAccK8sRuntimeResourceLabels(t *testing.T) {
 					resource.TestCheckResourceAttr("prodvana_k8s_runtime.test", "labels.0.label", "foo"),
 					resource.TestCheckResourceAttr("prodvana_k8s_runtime.test", "labels.0.value", "bar"),
 					resource.TestCheckResourceAttr("prodvana_k8s_runtime.test", "labels.1.label", "baz"),
-					resource.TestCheckResourceAttr("prodvana_k8s_runtime.test", "labels.1.value", "qux"),
+					resource.TestCheckResourceAttr("prodvana_k8s_runtime.test", "labels.1.value", "qux@"),
 				),
 			},
 			// ImportState testing
@@ -83,7 +83,7 @@ func TestAccK8sRuntimeResourceLabels(t *testing.T) {
 				Config: testAccK8sRuntimeResourceConfig(runtimeName, []labels.LabelDefinition{
 					{
 						Label: "foo",
-						Value: "notbar",
+						Value: "not-bar",
 					},
 				}),
 				Check: resource.ComposeAggregateTestCheckFunc(
