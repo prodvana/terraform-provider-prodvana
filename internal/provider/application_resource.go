@@ -54,6 +54,9 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: "Application name",
 				Required:            true,
 				Validators:          validators.DefaultNameValidators(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"version": schema.StringAttribute{
 				MarkdownDescription: "Current application version",
