@@ -50,6 +50,75 @@ func TestAccReleaseChannelResource(t *testing.T) {
 	})
 }
 
+func TestAccReleaseChannelResourceTestRenames(t *testing.T) {
+	appName := uniqueTestName("rc-tests")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccReleaseChannelResourceConfig("staging", appName, nil),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.staging", "name", "staging"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.staging", "application", appName),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.staging", "version"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.staging", "id"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.staging", "runtimes.0.runtime", "default"),
+				),
+			},
+			// rename release channel forces recreate
+			{
+				Config: testAccReleaseChannelResourceConfig("not-staging", appName, nil),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.not-staging", "name", "not-staging"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.not-staging", "application", appName),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.not-staging", "version"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.not-staging", "id"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.not-staging", "runtimes.0.runtime", "default"),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
+func TestAccReleaseChannelResourceTestAppChange(t *testing.T) {
+	appName := uniqueTestName("rc-tests")
+	appName2 := uniqueTestName("rc-tests")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccReleaseChannelResourceConfig("staging", appName, nil),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.staging", "name", "staging"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.staging", "application", appName),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.staging", "version"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.staging", "id"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.staging", "runtimes.0.runtime", "default"),
+				),
+			},
+			// change of app forces recreate
+			{
+				Config: testAccReleaseChannelResourceConfig("staging", appName2, nil),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_release_channel.staging", "name", "staging"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.staging", "application", appName2),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.staging", "version"),
+					resource.TestCheckResourceAttrSet("prodvana_release_channel.staging", "id"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.staging", "runtimes.0.runtime", "default"),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
 func TestAccReleaseChannelResourceWithContainerOrchestration(t *testing.T) {
 	appName := uniqueTestName("rc-tests")
 	resource.Test(t, resource.TestCase{
@@ -347,7 +416,7 @@ func testAccReleaseChannelResourceWithRuntimeType(app string) string {
 
 resource "prodvana_release_channel" "test" {
   name = "test"
-  application = prodvana_application.%[2]s.name
+  application = prodvana_application.app.name
   runtimes = [
 	{
 		runtime = "default"
@@ -364,7 +433,7 @@ func testAccReleaseChannelResourceWithPreconditions(app string) string {
 
 resource "prodvana_release_channel" "pre" {
   name = "pre"
-  application = prodvana_application.%[2]s.name
+  application = prodvana_application.app.name
   runtimes = [
 	{
 		runtime = "default"
@@ -374,7 +443,7 @@ resource "prodvana_release_channel" "pre" {
 
 resource "prodvana_release_channel" "pre2" {
   name = "pre2"
-  application = prodvana_application.%[2]s.name
+  application = prodvana_application.app.name
   runtimes = [
 	{
 		runtime = "default"
@@ -385,7 +454,7 @@ resource "prodvana_release_channel" "pre2" {
 
 resource "prodvana_release_channel" "test" {
   name = "test"
-  application = prodvana_application.%[2]s.name
+  application = prodvana_application.app.name
   runtimes = [
 	{
 		runtime = "default"
@@ -417,7 +486,7 @@ func testAccReleaseChannelResourceWithoutPreconditions(app string) string {
 
 resource "prodvana_release_channel" "pre" {
   name = "pre"
-  application = prodvana_application.%[2]s.name
+  application = prodvana_application.app.name
   runtimes = [
 	{
 		runtime = "default"
@@ -427,7 +496,7 @@ resource "prodvana_release_channel" "pre" {
 
 resource "prodvana_release_channel" "pre2" {
   name = "pre2"
-  application = prodvana_application.%[2]s.name
+  application = prodvana_application.app.name
   runtimes = [
 	{
 		runtime = "default"
@@ -437,7 +506,7 @@ resource "prodvana_release_channel" "pre2" {
 
 resource "prodvana_release_channel" "test" {
   name = "test"
-  application = prodvana_application.%[2]s.name
+  application = prodvana_application.app.name
   runtimes = [
 	{
 		runtime = "default"
@@ -453,7 +522,7 @@ func testAccReleaseChannelResourceWithK8sNamespace(app string, namespace string)
 
 resource "prodvana_release_channel" "test" {
   name = "test"
-  application = prodvana_application.%[2]s.name
+  application = prodvana_application.app.name
   runtimes = [
 	{
 		runtime = "default"
@@ -479,7 +548,7 @@ func testAccReleaseChannelResourceConfig(name, app string, env map[string]string
 
 resource "prodvana_release_channel" "%[2]s" {
   name = %[2]q
-  application = prodvana_application.%[3]s.name
+  application = prodvana_application.app.name
   runtimes = [
 	{
 		runtime = "default"
@@ -496,7 +565,7 @@ func testAccReleaseChannelResourceWithProtections(app string, paramA string, par
 
 resource "prodvana_release_channel" "test" {
   name = "test"
-  application = prodvana_application.%[2]s.name
+  application = prodvana_application.app.name
   runtimes = [
 	{
 		runtime = "default"
@@ -629,7 +698,7 @@ func testAccReleaseChannelResourceWithConstant(app string, key, value string) st
 
 resource "prodvana_release_channel" "test" {
   name = "test"
-  application = prodvana_application.%[2]s.name
+  application = prodvana_application.app.name
   runtimes = [
 	{
 		runtime = "default"

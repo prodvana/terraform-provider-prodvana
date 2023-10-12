@@ -263,11 +263,17 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 				MarkdownDescription: "Release Channel name",
 				Required:            true,
 				Validators:          validators.DefaultNameValidators(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"application": schema.StringAttribute{
 				MarkdownDescription: "Name of the Application this Release Channel belongs to",
 				Required:            true,
 				Validators:          validators.DefaultNameValidators(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"version": schema.StringAttribute{
 				MarkdownDescription: "Current application version",

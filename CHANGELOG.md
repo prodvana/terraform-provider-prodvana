@@ -1,4 +1,10 @@
-## 0.1.14 (unreleased)
+## 0.1.15 (unreleased)
+
+## 0.1.14
+
+FIXES:
+  - Force a resource recreate when `prodvana_application` `name` field changes
+  - Force a resource recreate when `prodvana_release_channel` `name` and `application` fields change
 
 ## 0.1.13
 

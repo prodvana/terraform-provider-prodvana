@@ -62,6 +62,9 @@ func (r *K8sRuntimeResource) Schema(ctx context.Context, req resource.SchemaRequ
 				MarkdownDescription: "Runtime name",
 				Required:            true,
 				Validators:          validators.DefaultNameValidators(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
