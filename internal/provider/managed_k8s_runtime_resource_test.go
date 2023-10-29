@@ -80,7 +80,7 @@ func TestAccManagedK8sRuntimeResourceLabels(t *testing.T) {
 					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "name", runtimeName),
 					resource.TestCheckResourceAttrSet("prodvana_managed_k8s_runtime."+runtimeName, "id"),
 					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "agent_env.PROXY", "foo"),
-					resource.TestCheckNoResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.label"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.%", "0"),
 				),
 			},
 			// // Update and Read testing
@@ -206,7 +206,7 @@ func TestAccManagedK8sRuntimeResourceLabels(t *testing.T) {
 					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "name", runtimeName),
 					resource.TestCheckResourceAttrSet("prodvana_managed_k8s_runtime."+runtimeName, "id"),
 					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "agent_env.PROXY", "bar"),
-					resource.TestCheckNoResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.label"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.%", "0"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase

@@ -845,7 +845,6 @@ func (r *ManagedK8sRuntimeResource) Read(ctx context.Context, req resource.ReadR
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read runtime state for %s, got error: %s", data.Name.ValueString(), err))
 		return
 	}
-
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
