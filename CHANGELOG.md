@@ -1,4 +1,10 @@
-## 0.1.15 (unreleased)
+## 0.1.16 (unreleased)
+
+## 0.1.15
+
+FIXES:
+  - Fixes a bug in `prodvana_managed_k8s_runtime` that prevented labels from being updated
+  - Fixes an internal provider typing bug that would trigger on certain runtime related errors
 
 ## 0.1.14
 
