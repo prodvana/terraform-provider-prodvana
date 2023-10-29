@@ -633,19 +633,14 @@ func (r *ManagedK8sRuntimeResource) createOrUpdate(ctx context.Context, diags di
 			return errors.Errorf("found existing agent deployment in cluster with a different runtime id: %s", runtimeId)
 		}
 	} else {
-		// the only change we must handle is if the agent_env attribute changes
+		// the only changes we must handle are labels, or the agent_env attribute as
 		// this needs to be passed on to the apiserver so it can update the agent
 		// properly, and then here we should recreate the deployment with the new env vars
-		// Why recreate here instead of legging apiserver handle it in its own update loop?
+		// Why recreate here instead of letting apiserver handle it in its own update loop?
 		// The env may contain proxy information, and if the proxy is changed, the agent
 		// may no longer be able to talk with apiserver and so cannot be updated FROM apiserver.
-		stateValue, valueDiags := stateData.AgentEnv.ToMapValue(ctx)
-		diags.Append(valueDiags...)
-		if diags.HasError() {
-			return errors.Errorf("Failed to convert agent_env to map: %v", diags.Errors())
-		}
 
-		if agentEnvValue.Equal(stateValue) {
+		if agentEnvValue.Equal(stateData.AgentEnv) && planData.Labels.Equal(stateData.Labels) {
 			// nothing to do
 			return nil
 		}
@@ -798,6 +793,7 @@ func (r *ManagedK8sRuntimeResource) createOrUpdate(ctx context.Context, diags di
 	if err != nil {
 		return err
 	}
+
 	return r.refresh(ctx, diags, clientSet, planData)
 }
 

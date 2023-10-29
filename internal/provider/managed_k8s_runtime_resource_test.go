@@ -67,6 +67,153 @@ func TestAccManagedK8sRuntimeResource(t *testing.T) {
 	})
 }
 
+func TestAccManagedK8sRuntimeResourceLabels(t *testing.T) {
+	runtimeName := uniqueTestName("managed-k8s-tests")
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "foo", nil),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "name", runtimeName),
+					resource.TestCheckResourceAttrSet("prodvana_managed_k8s_runtime."+runtimeName, "id"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "agent_env.PROXY", "foo"),
+					resource.TestCheckNoResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0"),
+				),
+			},
+			// // Update and Read testing
+			{
+				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "bar", []labels.LabelDefinition{
+					{
+						Label: "env",
+						Value: "dev",
+					},
+				}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "name", runtimeName),
+					resource.TestCheckResourceAttrSet("prodvana_managed_k8s_runtime."+runtimeName, "id"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "agent_env.PROXY", "bar"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.label", "env"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.value", "dev"),
+				),
+			},
+			// adding more labels
+			{
+				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "bar", []labels.LabelDefinition{
+					{
+						Label: "env",
+						Value: "dev",
+					},
+					{
+						Label: "region",
+						Value: "us-central1",
+					},
+					{
+						Label: "dc",
+						Value: "central",
+					},
+					{
+						Label: "costcenter",
+						Value: "rd",
+					},
+				}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "name", runtimeName),
+					resource.TestCheckResourceAttrSet("prodvana_managed_k8s_runtime."+runtimeName, "id"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "agent_env.PROXY", "bar"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.label", "env"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.value", "dev"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.1.label", "region"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.1.value", "us-central1"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.2.label", "dc"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.2.value", "central"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.3.label", "costcenter"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.3.value", "rd"),
+				),
+			},
+			// delete label from the middle
+			{
+				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "bar", []labels.LabelDefinition{
+					{
+						Label: "env",
+						Value: "dev",
+					},
+					{
+						Label: "region",
+						Value: "us-central1",
+					},
+					{
+						Label: "costcenter",
+						Value: "rd",
+					},
+				}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "name", runtimeName),
+					resource.TestCheckResourceAttrSet("prodvana_managed_k8s_runtime."+runtimeName, "id"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "agent_env.PROXY", "bar"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.label", "env"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.value", "dev"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.1.label", "region"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.1.value", "us-central1"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.2.label", "costcenter"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.2.value", "rd"),
+				),
+			},
+			// // delete label from the beginning
+			{
+				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "bar", []labels.LabelDefinition{
+					{
+						Label: "region",
+						Value: "us-central1",
+					},
+					{
+						Label: "costcenter",
+						Value: "rd",
+					},
+				}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "name", runtimeName),
+					resource.TestCheckResourceAttrSet("prodvana_managed_k8s_runtime."+runtimeName, "id"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "agent_env.PROXY", "bar"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.label", "region"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.value", "us-central1"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.1.label", "costcenter"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.1.value", "rd"),
+				),
+			},
+			// // delete label from the end
+			{
+				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "bar", []labels.LabelDefinition{
+					{
+						Label: "region",
+						Value: "us-central1",
+					},
+				}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "name", runtimeName),
+					resource.TestCheckResourceAttrSet("prodvana_managed_k8s_runtime."+runtimeName, "id"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "agent_env.PROXY", "bar"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.label", "region"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0.value", "us-central1"),
+				),
+			},
+			// delete all labels
+			{
+				Config: testAccManagedK8sRuntimeResourceConfig(runtimeName, "bar", nil),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "name", runtimeName),
+					resource.TestCheckResourceAttrSet("prodvana_managed_k8s_runtime."+runtimeName, "id"),
+					resource.TestCheckResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "agent_env.PROXY", "bar"),
+					resource.TestCheckNoResourceAttr("prodvana_managed_k8s_runtime."+runtimeName, "labels.0"),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
 func TestAccManagedK8sRuntimeResourceK8sAuth(t *testing.T) {
 	if os.Getenv(resource.EnvTfAcc) != "1" {
 		t.Skipf("Skipping acceptance test due to %s", resource.EnvTfAcc)
@@ -230,15 +377,24 @@ func TestAccManagedK8sRuntimeResourceK8sAuth(t *testing.T) {
 }
 
 func testAccManagedK8sRuntimeResourceConfig(name string, proxy string, labels []labels.LabelDefinition) string {
-	labelStr := ""
-	for _, label := range labels {
-		labelStr += fmt.Sprintf(`
+	labelsStr := ""
+	if len(labels) > 0 {
+		labelValuesStr := ""
+		for _, label := range labels {
+			labelValuesStr += fmt.Sprintf(`
 		{
 			label = %[1]q
 			value = %[2]q
 		},
 		`, label.Label, label.Value)
+		}
+		labelsStr = fmt.Sprintf(`
+	labels = [
+		%[1]s
+	]
+	`, labelValuesStr)
 	}
+
 	return fmt.Sprintf(`
 resource "prodvana_managed_k8s_runtime" "%[1]s" {
   name = %[1]q
@@ -249,11 +405,9 @@ resource "prodvana_managed_k8s_runtime" "%[1]s" {
   agent_env = {
 	"PROXY" = %[2]q 
   }
- labels = [
-	%[3]s
- ]
+  %[3]s
 }
-`, name, proxy, labelStr)
+`, name, proxy, labelsStr)
 }
 
 func testAccManagedK8sRuntimeResourceConfigPath(name string, configPath, context string) string {

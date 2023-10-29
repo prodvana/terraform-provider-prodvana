@@ -58,31 +58,30 @@ func LabelDefinitionProtosToTerraform(labelDefinitions []*labels_pb.LabelDefinit
 }
 func LabelDefinitionsToTerraformListWithValidation(ctx context.Context, labelDefinitions []*labels_pb.LabelDefinition, userProvided []LabelDefinition, diags diag.Diagnostics) types.List {
 	// we can't guarantee the order of the label definitions returned from the API, so rather than having Terraform think that
-	// the labels have changed because the order is different, we'll validate that the labels returned from the API match the
-	// user provided labels and then return the API provided labels in the same order, and let Terraform figure out if the
-	// label values have changed.
-	if len(labelDefinitions) != len(userProvided) {
-		diags = append(diags, diag.NewErrorDiagnostic(
-			"Inconsistent state",
-			"The label definitions returned from the API do not match the user provided labels. This is an internal error.",
-		))
-		return types.List{}
-	}
-	labelDefinitionsMap := make(map[string]*labels_pb.LabelDefinition)
+	// the labels have changed because the order is different, we ensure the API provided labels are in the same order when they match
+	// and then let Terraform figure out if the label values have changed or if there are any new labels
+	labelDefinitionsMap := make(map[string]LabelDefinition)
 	for _, label := range labelDefinitions {
-		labelDefinitionsMap[label.Label] = label
+		labelDefinitionsMap[label.Label] = LabelDefinitionFromProto(label)
+
 	}
-	labels := make([]LabelDefinition, len(userProvided))
-	for idx, label := range userProvided {
-		if _, ok := labelDefinitionsMap[label.Label]; !ok {
-			diags = append(diags, diag.NewErrorDiagnostic(
-				"Inconsistent state",
-				"The label definitions returned from the API do not match the user provided labels. This is an internal error.",
-			))
-			return types.List{}
+	userProvidedMap := make(map[string]LabelDefinition)
+	for _, label := range userProvided {
+		userProvidedMap[label.Label] = label
+	}
+	labels := make([]LabelDefinition, 0, len(labelDefinitions))
+	missing := []LabelDefinition{}
+	for _, userLabel := range userProvided {
+		if label, ok := labelDefinitionsMap[userLabel.Label]; ok {
+			labels = append(labels, label)
 		}
-		labels[idx] = label
 	}
+	for _, label := range labelDefinitions {
+		if _, ok := userProvidedMap[label.Label]; !ok {
+			missing = append(missing, LabelDefinitionFromProto(label))
+		}
+	}
+	labels = append(labels, missing...)
 	list, d := types.ListValueFrom(ctx, LabelDefinitionObjectType, labels)
 	diags.Append(d...)
 	return list
