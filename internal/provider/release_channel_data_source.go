@@ -192,6 +192,20 @@ func (d *ReleaseChannelDataSource) Schema(ctx context.Context, req datasource.Sc
 										},
 									},
 								},
+								"kubernetes_secret": schema.SingleNestedAttribute{
+									MarkdownDescription: "Reference to a secret value stored in Kubernetes.",
+									Optional:            true,
+									Attributes: map[string]schema.Attribute{
+										"secret_name": schema.StringAttribute{
+											MarkdownDescription: "Name of the secret object",
+											Optional:            true,
+										},
+										"key": schema.StringAttribute{
+											MarkdownDescription: "Key of the secret in the data field of the secret object",
+											Optional:            true,
+										},
+									},
+								},
 							},
 						},
 						MarkdownDescription: "default environment variables for services in this Release Channel",

@@ -163,8 +163,18 @@ Optional:
 
 Optional:
 
+- `kubernetes_secret` (Attributes) Reference to a secret value stored in Kubernetes. (see [below for nested schema](#nestedatt--policy--default_env--kubernetes_secret))
 - `secret` (Attributes) Reference to a secret value stored in Prodvana. (see [below for nested schema](#nestedatt--policy--default_env--secret))
 - `value` (String) Non-sensitive environment variable value
+
+<a id="nestedatt--policy--default_env--kubernetes_secret"></a>
+### Nested Schema for `policy.default_env.kubernetes_secret`
+
+Optional:
+
+- `key` (String) Key of the secret in the data field of the secret object
+- `secret_name` (String) Name of the secret object
+
 
 <a id="nestedatt--policy--default_env--secret"></a>
 ### Nested Schema for `policy.default_env.secret`

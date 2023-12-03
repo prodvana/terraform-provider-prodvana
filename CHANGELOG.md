@@ -1,5 +1,8 @@
 ## 0.1.16 (unreleased)
 
+FEATURES:
+- Add kubernetes_secret support to env
+
 ## 0.1.15
 
 FIXES:
