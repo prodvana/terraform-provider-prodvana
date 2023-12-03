@@ -63,6 +63,7 @@ resource "prodvana_release_channel" "prod" {
 
 - `constants` (Attributes List) Constant values for this release channel (see [below for nested schema](#nestedatt--constants))
 - `convergence_protections` (Attributes List) Feature Coming Soon (see [below for nested schema](#nestedatt--convergence_protections))
+- `disable_all_protections` (Boolean) Disable all protections for this release channel
 - `manual_approval_preconditions` (Attributes List) Preconditions requiring manual approval before this release channel can be deployed (see [below for nested schema](#nestedatt--manual_approval_preconditions))
 - `policy` (Attributes) Release Channel policy applied to all services (see [below for nested schema](#nestedatt--policy))
 - `protections` (Attributes List) Protections applied this release channel (see [below for nested schema](#nestedatt--protections))
@@ -83,7 +84,7 @@ Optional:
 - `k8s_namespace` (String) Optionally set a custom namespace. If not set, Prodvana will create and manage the namespace. If set, the namespace *must* already exist and Prodvana will not try to create or delete it. Can only be set on a Kubernetes Runtime.
 - `name` (String) optional identifier for this runtime connection within this release channel
 - `runtime` (String) name of the a runtime
-- `type` (String) type of the runtime connection, one of (EXTENSION, LONG_LIVED_COMPUTE, UNKNOWN_CONNECTION)
+- `type` (String) type of the runtime connection, one of (AWS_ECS, EXTENSION, GOOGLE_CLOUD_RUN, LONG_LIVED_COMPUTE, UNKNOWN_CONNECTION)
 
 
 <a id="nestedatt--constants"></a>
@@ -203,8 +204,18 @@ Optional:
 
 Optional:
 
+- `kubernetes_secret` (Attributes) Reference to a secret value stored in Kubernetes. (see [below for nested schema](#nestedatt--policy--default_env--kubernetes_secret))
 - `secret` (Attributes) Reference to a secret value stored in Prodvana. (see [below for nested schema](#nestedatt--policy--default_env--secret))
 - `value` (String) Non-sensitive environment variable value
+
+<a id="nestedatt--policy--default_env--kubernetes_secret"></a>
+### Nested Schema for `policy.default_env.kubernetes_secret`
+
+Optional:
+
+- `key` (String) Key of the secret in the data field of the secret object
+- `secret_name` (String) Name of the secret object
+
 
 <a id="nestedatt--policy--default_env--secret"></a>
 ### Nested Schema for `policy.default_env.secret`

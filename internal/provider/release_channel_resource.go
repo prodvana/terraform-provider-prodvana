@@ -62,6 +62,8 @@ type ReleaseChannelResourceModel struct {
 	ServiceInstanceProtections []*protectionAttachment `tfsdk:"service_instance_protections"`
 
 	Constants []*constant `tfsdk:"constants"`
+
+	DisableAllProtections types.Bool `tfsdk:"disable_all_protections"`
 }
 
 type constant struct {
@@ -453,6 +455,12 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 					},
 				},
 			},
+			"disable_all_protections": schema.BoolAttribute{
+				MarkdownDescription: "Disable all protections for this release channel",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
+			},
 		},
 	}
 }
@@ -557,7 +565,7 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 			switch rc.Precondition.(type) {
 			case *rc_pb.Precondition_ReleaseChannelStable_:
 				precon := &releaseChannelStable{
-					ReleaseChannel: types.StringValue(rc.GetReleaseChannelStable().ReleaseChannel),
+					ReleaseChannel: types.StringValue(rc.GetReleaseChannelStable().StableOneof.(*rc_pb.Precondition_ReleaseChannelStable_ReleaseChannel).ReleaseChannel),
 				}
 				rcStable = append(rcStable, precon)
 			case *rc_pb.Precondition_ManualApproval_:
@@ -606,6 +614,8 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 		}
 		data.Constants = constants
 	}
+
+	data.DisableAllProtections = types.BoolValue(config.DisableAllProtections)
 
 	return nil
 }
@@ -719,7 +729,9 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 			preconditions = append(preconditions, &rc_pb.Precondition{
 				Precondition: &rc_pb.Precondition_ReleaseChannelStable_{
 					ReleaseChannelStable: &rc_pb.Precondition_ReleaseChannelStable{
-						ReleaseChannel: rc.ReleaseChannel.ValueString(),
+						StableOneof: &rc_pb.Precondition_ReleaseChannelStable_ReleaseChannel{
+							ReleaseChannel: rc.ReleaseChannel.ValueString(),
+						},
 					},
 				},
 			})
@@ -769,6 +781,11 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 		}
 	}
 
+	var disableAllProtections bool
+	if !planData.DisableAllProtections.IsNull() {
+		disableAllProtections = planData.DisableAllProtections.ValueBool()
+	}
+
 	releaseChannel := &rc_pb.ReleaseChannelConfig{
 		Name:                       planData.Name.ValueString(),
 		Runtimes:                   runtimes,
@@ -778,6 +795,7 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 		ConvergenceProtections:     convergenceProtections,
 		ServiceInstanceProtections: svcInstanceProtections,
 		Constants:                  constants,
+		DisableAllProtections:      disableAllProtections,
 	}
 
 	_, err = r.client.ConfigureReleaseChannel(ctx, &rc_pb.ConfigureReleaseChannelReq{

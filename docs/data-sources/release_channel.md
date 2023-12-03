@@ -31,6 +31,7 @@ data "prodvana_release_channel" "example" {
 
 - `constants` (Attributes List) Constant values for this release channel (see [below for nested schema](#nestedatt--constants))
 - `convergence_protections` (Attributes List) Feature Coming Soon (see [below for nested schema](#nestedatt--convergence_protections))
+- `disable_all_protections` (Boolean) Disable all protections for this release channel
 - `manual_approval_preconditions` (Attributes List) Preconditions requiring manual approval before this release channel can be deployed (see [below for nested schema](#nestedatt--manual_approval_preconditions))
 - `policy` (Attributes) Release Channel policy applied to all services (see [below for nested schema](#nestedatt--policy))
 - `protections` (Attributes List) Protections applied this release channel (see [below for nested schema](#nestedatt--protections))
@@ -376,6 +377,6 @@ Optional:
 - `k8s_namespace` (String) Kubernetes namespace
 - `name` (String) optional identifier for this runtime connection within this release channel
 - `runtime` (String) name of the a runtime
-- `type` (String) type of the runtime connection, one of (EXTENSION, LONG_LIVED_COMPUTE, UNKNOWN_CONNECTION)
+- `type` (String) type of the runtime connection, one of (AWS_ECS, EXTENSION, GOOGLE_CLOUD_RUN, LONG_LIVED_COMPUTE, UNKNOWN_CONNECTION)
 
 

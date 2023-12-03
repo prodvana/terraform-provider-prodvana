@@ -1,7 +1,10 @@
-## 0.1.16 (unreleased)
+## 0.1.17 (unreleased)
+
+## 0.1.16
 
 FEATURES:
 - Add kubernetes_secret support to env
+- Add disable_all_protections support to release channel
 
 ## 0.1.15
 
