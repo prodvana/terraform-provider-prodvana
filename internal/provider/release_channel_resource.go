@@ -83,12 +83,17 @@ type policyModel struct {
 	DefaultEnv map[string]*envValue `tfsdk:"default_env"`
 }
 type envValue struct {
-	Value  types.String `tfsdk:"value"`
-	Secret *envSecret   `tfsdk:"secret"`
+	Value            types.String         `tfsdk:"value"`
+	Secret           *envSecret           `tfsdk:"secret"`
+	KubernetesSecret *envKubernetesSecret `tfsdk:"kubernetes_secret"`
 }
 type envSecret struct {
 	Key     types.String `tfsdk:"key"`
 	Version types.String `tfsdk:"version"`
+}
+type envKubernetesSecret struct {
+	SecretName types.String `tfsdk:"secret_name"`
+	Key        types.String `tfsdk:"key"`
 }
 
 type releaseChannelRuntimeConfig struct {
@@ -311,6 +316,20 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 										},
 									},
 								},
+								"kubernetes_secret": schema.SingleNestedAttribute{
+									MarkdownDescription: "Reference to a secret value stored in Kubernetes.",
+									Optional:            true,
+									Attributes: map[string]schema.Attribute{
+										"secret_name": schema.StringAttribute{
+											MarkdownDescription: "Name of the secret object",
+											Optional:            true,
+										},
+										"key": schema.StringAttribute{
+											MarkdownDescription: "Key of the secret in the data field of the secret object",
+											Optional:            true,
+										},
+									},
+								},
 							},
 						},
 						MarkdownDescription: "default environment variables for services in this Release Channel",
@@ -496,6 +515,11 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 					Key:     types.StringValue(t.Secret.Key),
 					Version: types.StringValue(t.Secret.Version),
 				}
+			case *common_config_pb.EnvValue_KubernetesSecret:
+				envVal.KubernetesSecret = &envKubernetesSecret{
+					Key:        types.StringValue(t.KubernetesSecret.Key),
+					SecretName: types.StringValue(t.KubernetesSecret.SecretName),
+				}
 			}
 			defaultEnv[k] = envVal
 		}
@@ -643,8 +667,19 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 		defaultEnv := map[string]*common_config_pb.EnvValue{}
 		for k, v := range planData.Policy.DefaultEnv {
 			envVal := &common_config_pb.EnvValue{}
-			if !v.Value.IsNull() && v.Secret != nil {
-				return fmt.Errorf("only one of Value or Secret can be set for %s", k)
+
+			setOneofs := 0
+			if !v.Value.IsNull() {
+				setOneofs++
+			}
+			if v.Secret != nil {
+				setOneofs++
+			}
+			if v.KubernetesSecret != nil {
+				setOneofs++
+			}
+			if setOneofs > 1 {
+				return fmt.Errorf("only one of Value or Secret or KubernetesSecret can be set for %s", k)
 			}
 
 			if !v.Value.IsNull() {
@@ -656,6 +691,13 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 					Secret: &common_config_pb.Secret{
 						Key:     v.Secret.Key.ValueString(),
 						Version: v.Secret.Version.ValueString(),
+					},
+				}
+			} else if v.KubernetesSecret != nil {
+				envVal.ValueOneof = &common_config_pb.EnvValue_KubernetesSecret{
+					KubernetesSecret: &common_config_pb.KubernetesSecret{
+						Key:        v.KubernetesSecret.Key.ValueString(),
+						SecretName: v.KubernetesSecret.SecretName.ValueString(),
 					},
 				}
 			} else {
