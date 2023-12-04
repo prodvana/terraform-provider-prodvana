@@ -311,6 +311,10 @@ func (d *ReleaseChannelDataSource) Schema(ctx context.Context, req datasource.Sc
 					},
 				},
 			},
+			"disable_all_protections": schema.BoolAttribute{
+				MarkdownDescription: "Disable all protections for this release channel",
+				Optional:            true,
+			},
 		},
 	}
 }
