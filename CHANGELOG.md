@@ -1,4 +1,9 @@
-## 0.1.17 (unreleased)
+## 0.1.18 (unreleased)
+
+## 0.1.17
+
+FEATURES:
+- Add  `shared_manual_approval_preconditions` support to `prodvana_release_channel`
 
 ## 0.1.16
 

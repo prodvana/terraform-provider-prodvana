@@ -37,6 +37,7 @@ data "prodvana_release_channel" "example" {
 - `protections` (Attributes List) Protections applied this release channel (see [below for nested schema](#nestedatt--protections))
 - `release_channel_stable_preconditions` (Attributes List) Preconditions requiring other release channels to be stable before this release channel can be deployed (see [below for nested schema](#nestedatt--release_channel_stable_preconditions))
 - `service_instance_protections` (Attributes List) Protections applied to service instances in this release channel (see [below for nested schema](#nestedatt--service_instance_protections))
+- `shared_manual_approval_preconditions` (Attributes List) Preconditions requiring manual approval before this release channel can be deployed, shared across release channels (see [below for nested schema](#nestedatt--shared_manual_approval_preconditions))
 
 ### Read-Only
 
@@ -366,6 +367,14 @@ Optional:
 
 - `enabled` (Boolean) whether to enable pre-approval lifecycle options
 
+
+
+<a id="nestedatt--shared_manual_approval_preconditions"></a>
+### Nested Schema for `shared_manual_approval_preconditions`
+
+Optional:
+
+- `name` (String) name of the manual approval
 
 
 <a id="nestedatt--runtimes"></a>

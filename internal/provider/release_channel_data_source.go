@@ -280,6 +280,20 @@ func (d *ReleaseChannelDataSource) Schema(ctx context.Context, req datasource.Sc
 					},
 				},
 			},
+			"shared_manual_approval_preconditions": schema.ListNestedAttribute{
+				MarkdownDescription: "Preconditions requiring manual approval before this release channel can be deployed, shared across release channels",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							MarkdownDescription: "name of the manual approval",
+							Optional:            true,
+							Computed:            true,
+							Validators:          validators.DefaultNameValidators(),
+						},
+					},
+				},
+			},
 			"protections": schema.ListNestedAttribute{
 				MarkdownDescription: "Protections applied this release channel",
 				Optional:            true,
