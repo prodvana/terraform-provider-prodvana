@@ -206,6 +206,9 @@ func TestAccReleaseChannelResourceWithStablePrecondition(t *testing.T) {
 
 					resource.TestCheckResourceAttr("prodvana_release_channel.test", "manual_approval_preconditions.0.name", "approval1"),
 					resource.TestCheckResourceAttr("prodvana_release_channel.test", "manual_approval_preconditions.1.name", "approval2"),
+
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "shared_manual_approval_preconditions.0.name", "shared-approval1"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "shared_manual_approval_preconditions.1.name", "shared-approval2"),
 				),
 			},
 			// ImportState testing
@@ -228,6 +231,9 @@ func TestAccReleaseChannelResourceWithStablePrecondition(t *testing.T) {
 
 					resource.TestCheckResourceAttr("prodvana_release_channel.test", "manual_approval_preconditions.0.name", "approval1"),
 					resource.TestCheckResourceAttr("prodvana_release_channel.test", "manual_approval_preconditions.1.name", "approval2"),
+
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "shared_manual_approval_preconditions.0.name", "shared-approval1"),
+					resource.TestCheckResourceAttr("prodvana_release_channel.test", "shared_manual_approval_preconditions.1.name", "shared-approval2"),
 				),
 			},
 			{
@@ -474,6 +480,14 @@ resource "prodvana_release_channel" "test" {
 	},
 	{
 		name = "approval2"
+	},
+  ]
+  shared_manual_approval_preconditions = [
+	{
+		name = "shared-approval1"
+	},
+	{
+		name = "shared-approval2"
 	},
   ]
 }

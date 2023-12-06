@@ -56,6 +56,7 @@ type ReleaseChannelResourceModel struct {
 
 	ReleaseChannelStablePreconditions []*releaseChannelStable `tfsdk:"release_channel_stable_preconditions"`
 	ManualApprovalPreconditions       []*manualApproval       `tfsdk:"manual_approval_preconditions"`
+	SharedManualApprovalPreconditions []*sharedManualApproval       `tfsdk:"shared_manual_approval_preconditions"`
 
 	Protections                []*protectionAttachment `tfsdk:"protections"`
 	ConvergenceProtections     []*protectionAttachment `tfsdk:"convergence_protections"`
@@ -79,6 +80,10 @@ type manualApproval struct {
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
 	EveryAction types.Bool   `tfsdk:"every_action"`
+}
+
+type sharedManualApproval struct {
+	Name 	  types.String `tfsdk:"name"`
 }
 
 type policyModel struct {
@@ -421,6 +426,21 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 					},
 				},
 			},
+			"shared_manual_approval_preconditions": schema.ListNestedAttribute{
+				MarkdownDescription: "Preconditions requiring manual approval before this release channel can be deployed, shared across release channels",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							MarkdownDescription: "name of the manual approval",
+							Optional:            true,
+							Computed:            true,
+							Default:             stringdefault.StaticString(""),
+							Validators:          validators.DefaultNameValidators(),
+						},
+					},
+				},
+			},
 			"protections": schema.ListNestedAttribute{
 				MarkdownDescription: "Protections applied this release channel",
 				Optional:            true,
@@ -561,6 +581,7 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 	if config.Preconditions != nil {
 		rcStable := []*releaseChannelStable{}
 		approvals := []*manualApproval{}
+		sharedApprovals := []*sharedManualApproval{}
 		for _, rc := range config.Preconditions {
 			switch rc.Precondition.(type) {
 			case *rc_pb.Precondition_ReleaseChannelStable_:
@@ -575,6 +596,11 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 					EveryAction: types.BoolValue(rc.GetManualApproval().EveryAction),
 				}
 				approvals = append(approvals, precon)
+				case *rc_pb.Precondition_SharedManualApproval_:
+					precon := &sharedManualApproval{
+						Name:        types.StringValue(rc.GetSharedManualApproval().Name),
+					}
+					sharedApprovals = append(sharedApprovals, precon)
 			}
 		}
 		if len(rcStable) > 0 {
@@ -582,6 +608,9 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 		}
 		if len(approvals) > 0 {
 			data.ManualApprovalPreconditions = approvals
+		}
+		if len(sharedApprovals) > 0 {
+			data.SharedManualApprovalPreconditions = sharedApprovals
 		}
 	}
 
@@ -746,6 +775,18 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 						Name:        approval.Name.ValueString(),
 						Description: approval.Description.ValueString(),
 						EveryAction: approval.EveryAction.ValueBool(),
+					},
+				},
+			})
+		}
+	}
+
+	if planData.SharedManualApprovalPreconditions != nil {
+		for _, approval := range planData.SharedManualApprovalPreconditions {
+			preconditions = append(preconditions, &rc_pb.Precondition{
+				Precondition: &rc_pb.Precondition_SharedManualApproval_{
+					SharedManualApproval: &rc_pb.Precondition_SharedManualApproval{
+						Name:        approval.Name.ValueString(),
 					},
 				},
 			})
