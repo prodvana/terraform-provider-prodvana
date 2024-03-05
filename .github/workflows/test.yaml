@@ -37,7 +37,7 @@ jobs:
         with:
           terraform_version: ${{ matrix.terraform-version }}
           terraform_wrapper: false
-      - run: go test -v -cover ./...
+      - run: go test -v -cover ./... -timeout 20m
         env:
           TF_ACC: '1'
           PVN_ORG_SLUG: ${{ vars.PVN_ORG_SLUG }}
