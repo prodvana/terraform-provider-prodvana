@@ -603,7 +603,7 @@ func (r *ManagedK8sRuntimeResource) createOrUpdate(ctx context.Context, diags di
 	req.Auth = &env_pb.ClusterAuth{
 		AuthOneof: &env_pb.ClusterAuth_K8S{
 			K8S: &env_pb.ClusterAuth_K8SAuth{
-				AgentExternallyManaged: true,
+				AgentExternallyManaged: false,
 				AgentEnv:               agentEnv,
 			},
 		},
