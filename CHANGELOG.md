@@ -1,4 +1,14 @@
-## 0.1.18 (unreleased)
+## 0.1.20 (unreleased)
+
+## 0.1.19
+
+FIX:
+- Adds a computed field `agent_externally_managed` to  `prodvana_managed_k8s_runtime` so the resource can fix agents that were incorrectly marked as externally managed
+
+## 0.1.18
+
+FIX:
+- Fixes a bug in `prodvana_managed_k8s_runtime` that mistakenly marked agents as externally managed
 
 ## 0.1.17
 

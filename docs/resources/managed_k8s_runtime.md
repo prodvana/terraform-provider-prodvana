@@ -96,6 +96,7 @@ resource "prodvana_managed_k8s_runtime" "example" {
 
 ### Read-Only
 
+- `agent_externally_managed` (Boolean) If the agent has been set to be externally managed. This should be false since this is the managed_k8s_runtime resource -- this is used to detect out of band changes to the agent deployment
 - `agent_namespace` (String) The namespace of the agent
 - `agent_runtime_id` (String) The runtime identifier of the agent
 - `id` (String) Runtime identifier
