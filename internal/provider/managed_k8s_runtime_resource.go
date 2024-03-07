@@ -28,6 +28,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -92,7 +93,8 @@ type ManagedK8sRuntimeResourceModel struct {
 	// the runtime_id as read from the agent annotation,
 	// used by the resource to detect if the underlying k8s
 	// cluster changed / the runtime was renamed
-	AgentRuntimeId types.String `tfsdk:"agent_runtime_id"`
+	AgentRuntimeId         types.String `tfsdk:"agent_runtime_id"`
+	AgentExternallyManaged types.Bool   `tfsdk:"agent_externally_managed"`
 	// the k8s namespace the agent is running in
 	AgentNamespace types.String `tfsdk:"agent_namespace"`
 }
@@ -303,6 +305,11 @@ The agent will be installed as a Kubernetes deployment in the specified namespac
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+			},
+			"agent_externally_managed": schema.BoolAttribute{
+				Computed:            true,
+				MarkdownDescription: "If the agent has been set to be externally managed. This should be false since this is the managed_k8s_runtime resource -- this is used to detect out of band changes to the agent deployment",
+				Default:             booldefault.StaticBool(false),
 			},
 			"agent_namespace": schema.StringAttribute{
 				Computed:            true,
@@ -524,6 +531,14 @@ func readManagedK8sRuntimeData(ctx context.Context, diags diag.Diagnostics, clie
 
 	if resp.Cluster.Type != env_pb.ClusterType_K8S {
 		return errors.Errorf("Unexpected non-Kubernetes runtime type: %s. Did the runtime change outside Terraform?", resp.Cluster.Type.String())
+	}
+
+	clusterAuth := resp.Cluster.GetAuth()
+	if clusterAuth != nil && clusterAuth.GetK8S() != nil {
+		k8sAuth := clusterAuth.GetK8S()
+		data.AgentExternallyManaged = types.BoolValue(k8sAuth.AgentExternallyManaged)
+	} else {
+		data.AgentExternallyManaged = types.BoolValue(false)
 	}
 
 	found, runtimeId, err := getDeploymentRuntimeId(ctx, clientSet, data)
