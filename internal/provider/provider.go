@@ -32,6 +32,7 @@ type ProdvanaProvider struct {
 type ProdvanaProviderModel struct {
 	OrgSlug  types.String `tfsdk:"org_slug"`
 	ApiToken types.String `tfsdk:"api_token"`
+	BaseDomain types.String `tfsdk:"base_domain"`
 }
 
 type AuthToken struct {
@@ -67,6 +68,10 @@ func (p *ProdvanaProvider) Schema(ctx context.Context, req provider.SchemaReques
 				// Optional because we support passing as an environment variable, see Configure
 				Optional: true,
 			},
+			"base_domain": schema.StringAttribute{
+				MarkdownDescription: "(Internal Only) The base domain to connect to, the default is runprodvana.com -- only change this if you know what you're doing.",
+				Optional: true,
+			},
 		},
 	}
 }
@@ -94,6 +99,16 @@ func (p *ProdvanaProvider) Configure(ctx context.Context, req provider.Configure
 		)
 	}
 
+	if data.BaseDomain.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("api_token"),
+			"Unknown Prodvana API Token",
+			"The provider cannot create  a Prodvana API client as there is an unknown configuration value for the api_token."+
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the PVN_API_TOKEN environment variable.",
+		)
+	}
+
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -103,6 +118,7 @@ func (p *ProdvanaProvider) Configure(ctx context.Context, req provider.Configure
 
 	orgSlug := os.Getenv("PVN_ORG_SLUG")
 	apiToken := os.Getenv("PVN_API_TOKEN")
+	baseDomain := os.Getenv("PVN_BASE_DOMAIN")
 
 	if !data.OrgSlug.IsNull() {
 		orgSlug = data.OrgSlug.ValueString()
@@ -110,6 +126,10 @@ func (p *ProdvanaProvider) Configure(ctx context.Context, req provider.Configure
 
 	if !data.ApiToken.IsNull() {
 		apiToken = data.ApiToken.ValueString()
+	}
+
+	if !data.BaseDomain.IsNull() {
+		baseDomain = data.BaseDomain.ValueString()
 	}
 
 	// If any of the expected configurations are missing, return
@@ -134,6 +154,11 @@ func (p *ProdvanaProvider) Configure(ctx context.Context, req provider.Configure
 		)
 	}
 
+
+	if baseDomain == "" {
+		baseDomain = "runprodvana.com"
+	}
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -144,7 +169,7 @@ func (p *ProdvanaProvider) Configure(ctx context.Context, req provider.Configure
 
 	tflog.Debug(ctx, "Creating Prodvana client")
 
-	domain := fmt.Sprintf("api.%s.prodvana.io", orgSlug)
+	domain := fmt.Sprintf("%s.grpc.%s", orgSlug, baseDomain)
 	cred := credentials.NewTLS(&tls.Config{ServerName: domain})
 	options := []grpc.DialOption{
 		grpc.WithTransportCredentials(cred),
