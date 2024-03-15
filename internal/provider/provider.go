@@ -101,10 +101,10 @@ func (p *ProdvanaProvider) Configure(ctx context.Context, req provider.Configure
 
 	if data.BaseDomain.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
-			path.Root("api_token"),
-			"Unknown Prodvana API Token",
-			"The provider cannot create  a Prodvana API client as there is an unknown configuration value for the api_token."+
-				"Either target apply the source of the value first, set the value statically in the configuration, or use the PVN_API_TOKEN environment variable.",
+			path.Root("base_domain"),
+			"Unknown Prodvana Base Domain",
+			"The provider cannot create  a Prodvana API client as there is an unknown configuration value for the base_domain."+
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the PVN_BASE_DOMAIN environment variable.",
 		)
 	}
 
