@@ -1,4 +1,9 @@
-## 0.1.21 (unreleased)
+## 0.1.22 (unreleased)
+
+## 0.1.21
+
+FIX:
+- better refresh handling in `prodvana_managed_k8s_runtime` when the runtime has been unlinked outside Terraform and the Kubernetes cluster is no longer reachable
 
 ## 0.1.20
 
