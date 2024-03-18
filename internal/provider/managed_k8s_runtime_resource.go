@@ -503,7 +503,7 @@ func getDeploymentRuntimeId(ctx context.Context, clientSet *kubernetes.Clientset
 	return true, agentDeploy.Annotations[agentRuntimeIdAnnotation], nil
 }
 
-func prodvanaCluserData(ctx context.Context, client env_pb.EnvironmentManagerClient, clusterName string) (*env_pb.ListClustersResp_ClusterInfo, error ) {
+func prodvanaClusterData(ctx context.Context, client env_pb.EnvironmentManagerClient, clusterName string) (*env_pb.ListClustersResp_ClusterInfo, error ) {
 	resp, err := client.GetCluster(ctx, &env_pb.GetClusterReq{
 		Runtime:     clusterName,
 		IncludeAuth: true,
@@ -519,7 +519,7 @@ func readManagedK8sRuntimeData(ctx context.Context, diags diag.Diagnostics, clie
 	 if maybeCluster != nil {
 		 cluster = maybeCluster
 	 } else {
-		c, err := prodvanaCluserData(ctx, client, data.Name.ValueString())
+		c, err := prodvanaClusterData(ctx, client, data.Name.ValueString())
 		if err != nil {
 			return err
 		}
@@ -859,7 +859,7 @@ func (r *ManagedK8sRuntimeResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	cluster, err := prodvanaCluserData(ctx, r.client, data.Name.ValueString())
+	cluster, err := prodvanaClusterData(ctx, r.client, data.Name.ValueString())
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			resp.State.RemoveResource(ctx)
