@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	app_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/application"
 	rc_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/release_channel"
+	version_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/version"
 	"github.com/prodvana/terraform-provider-prodvana/internal/provider/validators"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -146,6 +147,7 @@ func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 		ApplicationConfig: &app_pb.ApplicationConfig{
 			Name: data.Name.ValueString(),
 		},
+		Source: version_pb.Source_IAC,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create application, got error: %s", err))
@@ -228,6 +230,7 @@ func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	configResp, err := r.client.ConfigureApplication(ctx, &app_pb.ConfigureApplicationReq{
 		ApplicationConfig: appConfig,
+		Source:            version_pb.Source_IAC,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update application, got error: %s", err))

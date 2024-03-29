@@ -11,6 +11,7 @@ import (
 	prot_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/protection"
 	rc_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/release_channel"
 	runtimes_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/runtimes"
+	version_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/version"
 	"github.com/prodvana/terraform-provider-prodvana/internal/provider/validators"
 	"golang.org/x/exp/maps"
 	"google.golang.org/grpc"
@@ -56,7 +57,7 @@ type ReleaseChannelResourceModel struct {
 
 	ReleaseChannelStablePreconditions []*releaseChannelStable `tfsdk:"release_channel_stable_preconditions"`
 	ManualApprovalPreconditions       []*manualApproval       `tfsdk:"manual_approval_preconditions"`
-	SharedManualApprovalPreconditions []*sharedManualApproval       `tfsdk:"shared_manual_approval_preconditions"`
+	SharedManualApprovalPreconditions []*sharedManualApproval `tfsdk:"shared_manual_approval_preconditions"`
 
 	Protections                []*protectionAttachment `tfsdk:"protections"`
 	ConvergenceProtections     []*protectionAttachment `tfsdk:"convergence_protections"`
@@ -83,7 +84,7 @@ type manualApproval struct {
 }
 
 type sharedManualApproval struct {
-	Name 	  types.String `tfsdk:"name"`
+	Name types.String `tfsdk:"name"`
 }
 
 type policyModel struct {
@@ -596,11 +597,11 @@ func readReleaseChannelData(ctx context.Context, client rc_pb.ReleaseChannelMana
 					EveryAction: types.BoolValue(rc.GetManualApproval().EveryAction),
 				}
 				approvals = append(approvals, precon)
-				case *rc_pb.Precondition_SharedManualApproval_:
-					precon := &sharedManualApproval{
-						Name:        types.StringValue(rc.GetSharedManualApproval().Name),
-					}
-					sharedApprovals = append(sharedApprovals, precon)
+			case *rc_pb.Precondition_SharedManualApproval_:
+				precon := &sharedManualApproval{
+					Name: types.StringValue(rc.GetSharedManualApproval().Name),
+				}
+				sharedApprovals = append(sharedApprovals, precon)
 			}
 		}
 		if len(rcStable) > 0 {
@@ -786,7 +787,7 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 			preconditions = append(preconditions, &rc_pb.Precondition{
 				Precondition: &rc_pb.Precondition_SharedManualApproval_{
 					SharedManualApproval: &rc_pb.Precondition_SharedManualApproval{
-						Name:        approval.Name.ValueString(),
+						Name: approval.Name.ValueString(),
 					},
 				},
 			})
@@ -842,6 +843,7 @@ func (r *ReleaseChannelResource) createOrUpdate(ctx context.Context, planData *R
 	_, err = r.client.ConfigureReleaseChannel(ctx, &rc_pb.ConfigureReleaseChannelReq{
 		ReleaseChannel: releaseChannel,
 		Application:    planData.Application.ValueString(),
+		Source:         version_pb.Source_IAC,
 	})
 	if err != nil {
 		return err
