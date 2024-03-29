@@ -45,6 +45,10 @@ func (d *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				Computed:            true,
 				MarkdownDescription: "Application identifier",
 			},
+			"description": schema.StringAttribute{
+				MarkdownDescription: "Application description",
+				Optional:            true,
+			},
 		},
 	}
 }

@@ -1,5 +1,8 @@
 ## 0.1.22 (unreleased)
 
+FEATURES:
+- add support for setting `description` on `prodvana_application`
+
 ## 0.1.21
 
 FIX:

@@ -21,6 +21,7 @@ func TestAccApplicationResource(t *testing.T) {
 				Config: testAccApplicationResourceConfig(appName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("prodvana_application.app", "name", appName),
+					resource.TestCheckNoResourceAttr("prodvana_application.app", "description"),
 					resource.TestCheckResourceAttrSet("prodvana_application.app", "version"),
 					resource.TestCheckResourceAttrSet("prodvana_application.app", "id"),
 				),
@@ -37,6 +38,7 @@ func TestAccApplicationResource(t *testing.T) {
 				Config: testAccApplicationResourceConfig(appName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("prodvana_application.app", "name", appName),
+					resource.TestCheckNoResourceAttr("prodvana_application.app", "description"),
 					resource.TestCheckResourceAttrSet("prodvana_application.app", "version"),
 					resource.TestCheckResourceAttrSet("prodvana_application.app", "id"),
 				),
@@ -46,6 +48,47 @@ func TestAccApplicationResource(t *testing.T) {
 				Config: testAccApplicationResourceConfig(appName2),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("prodvana_application.app", "name", appName2),
+					resource.TestCheckResourceAttrSet("prodvana_application.app", "version"),
+					resource.TestCheckResourceAttrSet("prodvana_application.app", "id"),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
+func TestAccApplicationResourceWithDescription(t *testing.T) {
+	appName := uniqueTestName("app-tests")
+	appDesc := "This is a test description"
+	emptyDesc := "Another test description"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccApplicationResourceConfigWithDescription(appName, appDesc),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_application.app", "name", appName),
+					resource.TestCheckResourceAttr("prodvana_application.app", "description", appDesc),
+					resource.TestCheckResourceAttrSet("prodvana_application.app", "version"),
+					resource.TestCheckResourceAttrSet("prodvana_application.app", "id"),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      "prodvana_application.app",
+				ImportStateId:     appName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Update and Read testing
+			{
+				Config: testAccApplicationResourceConfigWithDescription(appName, emptyDesc),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("prodvana_application.app", "name", appName),
+					resource.TestCheckResourceAttr("prodvana_application.app", "description", emptyDesc),
 					resource.TestCheckResourceAttrSet("prodvana_application.app", "version"),
 					resource.TestCheckResourceAttrSet("prodvana_application.app", "id"),
 				),
@@ -66,4 +109,13 @@ resource "prodvana_application" "app" {
   name = %[1]q
 }
 `, name)
+}
+
+func testAccApplicationResourceConfigWithDescription(name, desc string) string {
+	return fmt.Sprintf(`
+resource "prodvana_application" "app" {
+  name = %[1]q
+  description = %[2]q
+}
+`, name, desc)
 }
