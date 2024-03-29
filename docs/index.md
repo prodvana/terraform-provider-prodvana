@@ -35,6 +35,7 @@ provider "prodvana" {
 ### Optional
 
 - `api_token` (String, Sensitive) An API token generated with permissions to this organization.
+- `base_domain` (String) (Internal Only) The base domain to connect to, the default is runprodvana.com -- only change this if you know what you're doing.
 - `org_slug` (String) Prodvana organization to authenticate with (you can find this in your Org's url: <org>.prodvana.io)
 
 Or they can be provided as environment variables:

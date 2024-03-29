@@ -12,11 +12,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -37,9 +39,10 @@ type ApplicationResource struct {
 
 // ApplicationResourceModel describes the resource data model.
 type ApplicationResourceModel struct {
-	Name    types.String `tfsdk:"name"`
-	Id      types.String `tfsdk:"id"`
-	Version types.String `tfsdk:"version"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	Id          types.String `tfsdk:"id"`
+	Version     types.String `tfsdk:"version"`
 }
 
 func (r *ApplicationResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -67,6 +70,13 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: "Application identifier",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"description": schema.StringAttribute{
+				MarkdownDescription: "Application description",
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
 				},
 			},
 		},
@@ -109,6 +119,12 @@ func readApplicationData(ctx context.Context, client app_pb.ApplicationManagerCl
 	data.Id = types.StringValue(appMeta.Id)
 	data.Version = types.StringValue(appMeta.Version)
 
+	if getAppResp.Application.UserMetadata != nil && getAppResp.Application.UserMetadata.Description != "" {
+		data.Description = types.StringValue(getAppResp.Application.UserMetadata.Description)
+	} else {
+		data.Description = types.StringNull()
+	}
+
 	return nil
 }
 
@@ -137,6 +153,19 @@ func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 	}
 	data.Id = types.StringValue(configResp.Meta.Id)
 	data.Version = types.StringValue(configResp.Meta.Version)
+
+	if !data.Description.IsNull() && !data.Description.IsUnknown() {
+		_, err := r.client.SetApplicationMetadata(ctx, &app_pb.SetApplicationMetadataReq{
+			Application: data.Name.ValueString(),
+			Metadata: &app_pb.ApplicationUserMetadata{
+				Description: data.Description.ValueString(),
+			},
+		})
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to set application metadata, got error: %s", err))
+			return
+		}
+	}
 
 	tflog.Trace(ctx, "created application resource")
 
@@ -204,9 +233,25 @@ func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update application, got error: %s", err))
 		return
 	}
-
 	planData.Id = types.StringValue(configResp.Meta.Id)
 	planData.Version = types.StringValue(configResp.Meta.Version)
+
+	// check if description is set
+	if !planData.Description.IsNull() && !planData.Description.IsUnknown() {
+		// check if it changed
+		if stateData.Description.IsNull() || stateData.Description.IsUnknown() || stateData.Description.ValueString() != planData.Description.ValueString() {
+			_, err := r.client.SetApplicationMetadata(ctx, &app_pb.SetApplicationMetadataReq{
+				Application: planData.Name.ValueString(),
+				Metadata: &app_pb.ApplicationUserMetadata{
+					Description: planData.Description.ValueString(),
+				},
+			})
+			if err != nil {
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to set application metadata, got error: %s", err))
+				return
+			}
+		}
+	}
 
 	tflog.Trace(ctx, "updated application resource")
 

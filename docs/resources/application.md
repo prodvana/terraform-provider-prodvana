@@ -25,6 +25,10 @@ resource "prodvana_application" "example" {
 
 - `name` (String) Application name
 
+### Optional
+
+- `description` (String) Application description
+
 ### Read-Only
 
 - `id` (String) Application identifier
