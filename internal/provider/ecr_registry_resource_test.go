@@ -9,6 +9,7 @@ import (
 )
 
 func TestAccECRRegistryResource(t *testing.T) {
+	name := uniqueTestName("tf-ecr")
 	keyId := os.Getenv("ECR_ACCESS_KEY_ID")
 	accessKey := os.Getenv("ECR_SECRET_ACCESS_KEY")
 	resource.Test(t, resource.TestCase{
@@ -17,22 +18,22 @@ func TestAccECRRegistryResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testinga
 			{
-				Config: testAccK8sECRRegistryResource("tf-ecr", "us-west-2", keyId, accessKey),
+				Config: testAccK8sECRRegistryResource(name, "us-west-2", keyId, accessKey),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("prodvana_ecr_registry.test", "id"),
 					resource.TestCheckResourceAttr("prodvana_ecr_registry.test", "region", "us-west-2"),
-					resource.TestCheckResourceAttr("prodvana_ecr_registry.test", "name", "tf-ecr"),
+					resource.TestCheckResourceAttr("prodvana_ecr_registry.test", "name", name),
 					resource.TestCheckResourceAttr("prodvana_ecr_registry.test", "credentials_auth.access_key_id", keyId),
 					resource.TestCheckResourceAttr("prodvana_ecr_registry.test", "credentials_auth.secret_access_key", accessKey),
 				),
 			},
 			// Update and Read test
 			{
-				Config: testAccK8sECRRegistryResource("tf-ecr", "us-west-2", keyId, accessKey),
+				Config: testAccK8sECRRegistryResource(name, "us-west-2", keyId, accessKey),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("prodvana_ecr_registry.test", "id"),
 					resource.TestCheckResourceAttr("prodvana_ecr_registry.test", "region", "us-west-2"),
-					resource.TestCheckResourceAttr("prodvana_ecr_registry.test", "name", "tf-ecr"),
+					resource.TestCheckResourceAttr("prodvana_ecr_registry.test", "name", name),
 					resource.TestCheckResourceAttr("prodvana_ecr_registry.test", "credentials_auth.access_key_id", keyId),
 					resource.TestCheckResourceAttr("prodvana_ecr_registry.test", "credentials_auth.secret_access_key", accessKey),
 				),

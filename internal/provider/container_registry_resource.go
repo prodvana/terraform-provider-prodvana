@@ -7,6 +7,7 @@ import (
 	workflow_pb "github.com/prodvana/prodvana-public/go/prodvana-sdk/proto/prodvana/workflow"
 	"github.com/prodvana/terraform-provider-prodvana/internal/provider/validators"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -78,11 +79,17 @@ func (r *ContainerRegistryResource) Schema(ctx context.Context, req resource.Sch
 			"username": schema.StringAttribute{
 				MarkdownDescription: "Username to authenticate with the container registry.",
 				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("password")),
+				},
 			},
 			"password": schema.StringAttribute{
 				MarkdownDescription: "Password to authenticate with the container registry.",
 				Sensitive:           true,
 				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("username")),
+				},
 			},
 			"public": schema.BoolAttribute{
 				MarkdownDescription: "Whether the container registry is public (no authentication required) or not.",

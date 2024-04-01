@@ -9,6 +9,7 @@ import (
 )
 
 func TestAccContainerRegistryResource(t *testing.T) {
+	name := uniqueTestName("tf-dockerhub-authed")
 	password := os.Getenv("DOCKERHUB_PASSWORD")
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -16,11 +17,11 @@ func TestAccContainerRegistryResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccK8sContainerRegistryResource("tf-dockerhub-authed", "https://index.docker.io", "prodvana", password),
+				Config: testAccK8sContainerRegistryResource(name, "https://index.docker.io", "prodvana", password),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("prodvana_container_registry.test", "id"),
 					resource.TestCheckResourceAttr("prodvana_container_registry.test", "url", "https://index.docker.io"),
-					resource.TestCheckResourceAttr("prodvana_container_registry.test", "name", "tf-dockerhub-authed"),
+					resource.TestCheckResourceAttr("prodvana_container_registry.test", "name", name),
 					resource.TestCheckResourceAttr("prodvana_container_registry.test", "public", "false"),
 					resource.TestCheckResourceAttr("prodvana_container_registry.test", "username", "prodvana"),
 					resource.TestCheckResourceAttr("prodvana_container_registry.test", "password", password),
@@ -28,11 +29,11 @@ func TestAccContainerRegistryResource(t *testing.T) {
 			},
 			// Update and Read test
 			{
-				Config: testAccK8sContainerRegistryResource("tf-dockerhub-authed", "https://index.docker.io", "prodvana", password),
+				Config: testAccK8sContainerRegistryResource(name, "https://index.docker.io", "prodvana", password),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("prodvana_container_registry.test", "id"),
 					resource.TestCheckResourceAttr("prodvana_container_registry.test", "url", "https://index.docker.io"),
-					resource.TestCheckResourceAttr("prodvana_container_registry.test", "name", "tf-dockerhub-authed"),
+					resource.TestCheckResourceAttr("prodvana_container_registry.test", "name", name),
 					resource.TestCheckResourceAttr("prodvana_container_registry.test", "public", "false"),
 					resource.TestCheckResourceAttr("prodvana_container_registry.test", "username", "prodvana"),
 					resource.TestCheckResourceAttr("prodvana_container_registry.test", "password", password),
@@ -44,17 +45,18 @@ func TestAccContainerRegistryResource(t *testing.T) {
 }
 
 func TestAccContainerRegistryResourcePublic(t *testing.T) {
+	name := uniqueTestName("tf-dockerhub-pub")
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccK8sContainerRegistryResourcePublic("tf-dockerhub-pub", "https://index.docker.io"),
+				Config: testAccK8sContainerRegistryResourcePublic(name, "https://index.docker.io"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("prodvana_container_registry.test", "id"),
 					resource.TestCheckResourceAttr("prodvana_container_registry.test", "url", "https://index.docker.io"),
-					resource.TestCheckResourceAttr("prodvana_container_registry.test", "name", "tf-dockerhub-pub"),
+					resource.TestCheckResourceAttr("prodvana_container_registry.test", "name", name),
 					resource.TestCheckResourceAttr("prodvana_container_registry.test", "public", "true"),
 					resource.TestCheckNoResourceAttr("prodvana_container_registry.test", "username"),
 					resource.TestCheckNoResourceAttr("prodvana_container_registry.test", "password"),
@@ -62,11 +64,11 @@ func TestAccContainerRegistryResourcePublic(t *testing.T) {
 			},
 			// Update and Read test
 			{
-				Config: testAccK8sContainerRegistryResourcePublic("tf-dockerhub-pub", "https://index.docker.io"),
+				Config: testAccK8sContainerRegistryResourcePublic(name, "https://index.docker.io"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("prodvana_container_registry.test", "id"),
 					resource.TestCheckResourceAttr("prodvana_container_registry.test", "url", "https://index.docker.io"),
-					resource.TestCheckResourceAttr("prodvana_container_registry.test", "name", "tf-dockerhub-pub"),
+					resource.TestCheckResourceAttr("prodvana_container_registry.test", "name", name),
 					resource.TestCheckResourceAttr("prodvana_container_registry.test", "public", "true"),
 					resource.TestCheckNoResourceAttr("prodvana_container_registry.test", "username"),
 					resource.TestCheckNoResourceAttr("prodvana_container_registry.test", "password"),
@@ -93,6 +95,7 @@ func testAccK8sContainerRegistryResourcePublic(name, url string) string {
 resource "prodvana_container_registry" "test" {
   name = %[1]q
   url = %[2]q
+  public = true
 }
 `, name, url)
 }
