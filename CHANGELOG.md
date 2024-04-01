@@ -1,7 +1,10 @@
-## 0.1.22 (unreleased)
+## 0.1.23 (unreleased)
+
+## 0.1.22
 
 FEATURES:
-- add support for setting `description` on `prodvana_application`
+- Adds support for managing container registry with `prodvana_container_registry` and `prodvana_ecr_registry`
+- Adds support for setting `description` on `prodvana_application`
 
 ## 0.1.21
 
