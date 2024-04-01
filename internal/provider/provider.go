@@ -30,8 +30,8 @@ type ProdvanaProvider struct {
 
 // ProdvanaProviderModel describes the provider data model.
 type ProdvanaProviderModel struct {
-	OrgSlug  types.String `tfsdk:"org_slug"`
-	ApiToken types.String `tfsdk:"api_token"`
+	OrgSlug    types.String `tfsdk:"org_slug"`
+	ApiToken   types.String `tfsdk:"api_token"`
 	BaseDomain types.String `tfsdk:"base_domain"`
 }
 
@@ -70,7 +70,7 @@ func (p *ProdvanaProvider) Schema(ctx context.Context, req provider.SchemaReques
 			},
 			"base_domain": schema.StringAttribute{
 				MarkdownDescription: "(Internal Only) The base domain to connect to, the default is runprodvana.com -- only change this if you know what you're doing.",
-				Optional: true,
+				Optional:            true,
 			},
 		},
 	}
@@ -107,7 +107,6 @@ func (p *ProdvanaProvider) Configure(ctx context.Context, req provider.Configure
 				"Either target apply the source of the value first, set the value statically in the configuration, or use the PVN_BASE_DOMAIN environment variable.",
 		)
 	}
-
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -154,7 +153,6 @@ func (p *ProdvanaProvider) Configure(ctx context.Context, req provider.Configure
 		)
 	}
 
-
 	if baseDomain == "" {
 		baseDomain = "runprodvana.com"
 	}
@@ -198,6 +196,8 @@ func (p *ProdvanaProvider) Resources(ctx context.Context) []func() resource.Reso
 		NewK8sRuntimeResource,
 		NewRuntimeLinkResource,
 		NewManagedK8sRuntimeResource,
+		NewContainerRegistryResource,
+		NewECRRegistryResource,
 	}
 }
 

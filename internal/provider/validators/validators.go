@@ -20,7 +20,13 @@ func DefaultNameValidators() []validator.String {
 			"must contain only lowercase alphanumeric characters, and start with a letter.",
 		),
 	}
+}
 
+func URLHasHTTPProtocolValidator() validator.String {
+	return stringvalidator.RegexMatches(
+		regexp.MustCompile(`^https?://`),
+		"must start with http:// or https://",
+	)
 }
 
 func CheckAttributeAtPath(path path.Expression, value attr.Value) validator.Object {
