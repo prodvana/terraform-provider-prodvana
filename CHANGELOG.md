@@ -1,4 +1,9 @@
-## 0.1.24 (unreleased)
+## 0.1.25 (unreleased)
+
+## 0.1.24
+
+CHANGE:
+- Makes the `prodvana_release_channel.runtimes[*].type` field read-only, to reflect an API change.
 
 ## 0.1.23
 

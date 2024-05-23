@@ -362,11 +362,7 @@ func (r *ReleaseChannelResource) Schema(ctx context.Context, req resource.Schema
 						},
 						"type": schema.StringAttribute{
 							MarkdownDescription: fmt.Sprintf("type of the runtime connection, one of (%s)", strings.Join(runtimeConnectionTypes, ", ")),
-							Optional:            true,
 							Computed:            true,
-							Validators: []validator.String{
-								stringvalidator.OneOf(runtimeConnectionTypes...),
-							},
 						},
 						"k8s_namespace": schema.StringAttribute{
 							MarkdownDescription: "Optionally set a custom namespace. If not set, Prodvana will create and manage the namespace. If set, the namespace *must* already exist and Prodvana will not try to create or delete it. Can only be set on a Kubernetes Runtime.",
