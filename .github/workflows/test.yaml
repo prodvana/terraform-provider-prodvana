@@ -5,7 +5,7 @@ on:
     paths:
       - '.github/workflows/test.yaml'
       - '**.go'
-      -'go.mod'
+      - 'go.mod'
 
 permissions:
   # Permission for checking out code
