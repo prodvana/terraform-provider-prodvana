@@ -1,4 +1,8 @@
-## 0.1.23 (unreleased)
+## 0.1.24 (unreleased)
+
+## 0.1.23
+
+- Updated `prodvana-sdk` to the latest version (v0.3.47)
 
 ## 0.1.22
 

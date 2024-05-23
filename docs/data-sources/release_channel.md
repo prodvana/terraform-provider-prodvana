@@ -386,6 +386,6 @@ Optional:
 - `k8s_namespace` (String) Kubernetes namespace
 - `name` (String) optional identifier for this runtime connection within this release channel
 - `runtime` (String) name of the a runtime
-- `type` (String) type of the runtime connection, one of (AWS_ECS, EXTENSION, GOOGLE_CLOUD_RUN, LONG_LIVED_COMPUTE, UNKNOWN_CONNECTION)
+- `type` (String) type of the runtime connection, one of (AWS_ECS, EXTENSION, FLY, GOOGLE_CLOUD_RUN, LONG_LIVED_COMPUTE, PULUMI, TERRAFORM, UNKNOWN_CONNECTION)
 
 
