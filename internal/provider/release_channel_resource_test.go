@@ -426,7 +426,6 @@ resource "prodvana_release_channel" "test" {
   runtimes = [
 	{
 		runtime = "default"
-		type = "LONG_LIVED_COMPUTE"
 	},
   ]
 }
