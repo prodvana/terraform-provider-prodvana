@@ -1,4 +1,9 @@
-## 0.1.25 (unreleased)
+## 0.1.26 (unreleased)
+
+## 0.1.25
+
+FEATURES:
+- Add support for `prodvana_application.no_cleanup_on_delete`
 
 ## 0.1.24
 

@@ -118,6 +118,7 @@ func (p *ProdvanaProvider) Configure(ctx context.Context, req provider.Configure
 	orgSlug := os.Getenv("PVN_ORG_SLUG")
 	apiToken := os.Getenv("PVN_API_TOKEN")
 	baseDomain := os.Getenv("PVN_BASE_DOMAIN")
+	apiserverURL := os.Getenv("PVN_APISERVER_URL")
 
 	if !data.OrgSlug.IsNull() {
 		orgSlug = data.OrgSlug.ValueString()
@@ -133,24 +134,25 @@ func (p *ProdvanaProvider) Configure(ctx context.Context, req provider.Configure
 
 	// If any of the expected configurations are missing, return
 	// errors with provider-specific guidance.
+	if apiserverURL == "" {
+		if orgSlug == "" {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("org_slug"),
+				"Missing Prodvana Org Slug",
+				"The provider cannot create  a Prodvana API client as there is an unknown configuration value for the org_slug."+
+					"Either target apply the source of the value first, set the value statically in the configuration, or use the PVN_ORG_SLUG environment variable."+
+					"If either is already set, ensure the value is not empty.",
+			)
+		}
 
-	if orgSlug == "" {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("org_slug"),
-			"Missing Prodvana Org Slug",
-			"The provider cannot create  a Prodvana API client as there is an unknown configuration value for the org_slug."+
-				"Either target apply the source of the value first, set the value statically in the configuration, or use the PVN_ORG_SLUG environment variable."+
-				"If either is already set, ensure the value is not empty.",
-		)
-	}
-
-	if apiToken == "" {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("api_token"),
-			"Missing Prodvana API Token",
-			"The provider cannot create  a Prodvana API client as there is an unknown configuration value for the api_token."+
-				"Either target apply the source of the value first, set the value statically in the configuration, or use the PVN_API_TOKEN environment variable.",
-		)
+		if apiToken == "" {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("api_token"),
+				"Missing Prodvana API Token",
+				"The provider cannot create  a Prodvana API client as there is an unknown configuration value for the api_token."+
+					"Either target apply the source of the value first, set the value statically in the configuration, or use the PVN_API_TOKEN environment variable.",
+			)
+		}
 	}
 
 	if baseDomain == "" {
@@ -168,6 +170,9 @@ func (p *ProdvanaProvider) Configure(ctx context.Context, req provider.Configure
 	tflog.Debug(ctx, "Creating Prodvana client")
 
 	domain := fmt.Sprintf("%s.grpc.%s", orgSlug, baseDomain)
+	if apiserverURL != "" {
+		domain = apiserverURL
+	}
 	cred := credentials.NewTLS(&tls.Config{ServerName: domain})
 	options := []grpc.DialOption{
 		grpc.WithTransportCredentials(cred),
