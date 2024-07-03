@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -40,10 +41,11 @@ type ApplicationResource struct {
 
 // ApplicationResourceModel describes the resource data model.
 type ApplicationResourceModel struct {
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	Id          types.String `tfsdk:"id"`
-	Version     types.String `tfsdk:"version"`
+	Name              types.String `tfsdk:"name"`
+	Description       types.String `tfsdk:"description"`
+	Id                types.String `tfsdk:"id"`
+	Version           types.String `tfsdk:"version"`
+	NoCleanupOnDelete types.Bool   `tfsdk:"no_cleanup_on_delete"`
 }
 
 func (r *ApplicationResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -79,6 +81,12 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
+			},
+			"no_cleanup_on_delete": schema.BoolAttribute{
+				MarkdownDescription: "Prevent the application from being deleted when the resource is destroyed",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
 			},
 		},
 	}
@@ -119,6 +127,7 @@ func readApplicationData(ctx context.Context, client app_pb.ApplicationManagerCl
 	data.Name = types.StringValue(appMeta.Name)
 	data.Id = types.StringValue(appMeta.Id)
 	data.Version = types.StringValue(appMeta.Version)
+	data.NoCleanupOnDelete = types.BoolValue(getAppResp.Application.Config.NoCleanupOnDelete)
 
 	if getAppResp.Application.UserMetadata != nil && getAppResp.Application.UserMetadata.Description != "" {
 		data.Description = types.StringValue(getAppResp.Application.UserMetadata.Description)
@@ -145,7 +154,8 @@ func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 
 	configResp, err := r.client.ConfigureApplication(ctx, &app_pb.ConfigureApplicationReq{
 		ApplicationConfig: &app_pb.ApplicationConfig{
-			Name: data.Name.ValueString(),
+			Name:              data.Name.ValueString(),
+			NoCleanupOnDelete: data.NoCleanupOnDelete.ValueBool(),
 		},
 		Source: version_pb.Source_IAC,
 	})
@@ -226,7 +236,7 @@ func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	// this is not really needed since changing the application's name is not supported
 	appConfig.Name = planData.Name.ValueString()
-	// this is where newly supported fields should be set
+	appConfig.NoCleanupOnDelete = planData.NoCleanupOnDelete.ValueBool()
 
 	configResp, err := r.client.ConfigureApplication(ctx, &app_pb.ConfigureApplicationReq{
 		ApplicationConfig: appConfig,

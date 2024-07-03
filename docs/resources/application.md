@@ -28,6 +28,7 @@ resource "prodvana_application" "example" {
 ### Optional
 
 - `description` (String) Application description
+- `no_cleanup_on_delete` (Boolean) Prevent the application from being deleted when the resource is destroyed
 
 ### Read-Only
 
